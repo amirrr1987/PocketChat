@@ -1,103 +1,51 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
-      <q-toolbar>
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
-        />
-
-        <q-toolbar-title> Telegram </q-toolbar-title>
-
-
-      </q-toolbar>
-    </q-header>
-
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
-      <q-img
-        src="https://cdn.quasar.dev/img/parallax2.jpg"
-        spinner-color="white"
-        style="height: 170px; max-width: 300px"
-        img-class="my-custom-image"
-        class="rounded-borders"
-      >
-        <div class="absolute-bottom text-subtitle1 text-center">
-          Amir Maghami
-        </div>
-      </q-img>
-      <q-list>
-
-        <EssentialLink
-          v-for="link in essentialLinks"
-          :key="link.title"
-          v-bind="link"
-        />
-      </q-list>
-    </q-drawer>
-
-    <q-page-container>
-      <router-view />
-    </q-page-container>
-  </q-layout>
+  <div>
+    <NavBar :title="navTitle" fixed placeholder>
+      <template #right>
+        <Tag v-if="authStore.auth" plain type="primary">{{ initials }}</Tag>
+      </template>
+    </NavBar>
+    <RouterView v-slot="{ Component }">
+      <component :is="Component" />
+    </RouterView>
+    <Tabbar v-model="activeTab" route placeholder>
+      <TabbarItem to="/chats" name="chats" icon="chat-o">Chats</TabbarItem>
+      <TabbarItem to="/contacts" name="contacts" icon="friends-o">Contacts</TabbarItem>
+    </Tabbar>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import EssentialLink, {
-  EssentialLinkProps,
-} from 'components/EssentialLink.vue';
+import { computed, ref, watch } from "vue";
+import { RouterView, useRoute } from "vue-router";
+/* eslint-disable @typescript-eslint/no-unused-vars -- Vant components used in template as van-nav-bar, van-tag, van-tabbar, van-tabbar-item */
+import { NavBar, Tag, Tabbar, TabbarItem } from "vant";
+/* eslint-enable @typescript-eslint/no-unused-vars */
+import { useAuthStore } from "@/stores/auth.store";
 
-const essentialLinks: EssentialLinkProps[] = [
-  {
-    title: 'New Group',
-    icon: 'people',
-    link: 'https://chat.quasar.dev',
-  },
-  {
-    title: 'Contacts',
-    icon: 'person',
-    link: 'https://chat.quasar.dev',
-  },
-  {
-    title: 'Calls',
-    icon: 'call',
-    link: 'https://facebook.quasar.dev',
-  },
-  {
-    title: 'People Nearby',
-    icon: 'location_on',
-    link: 'https://twitter.quasar.dev',
-  },
-  {
-    title: 'Saved Messages',
-    icon: 'bookmark_border',
-    link: 'https://forum.quasar.dev',
-  },
-  {
-    title: 'Setting',
-    icon: 'settings',
-    link: 'https://quasar.dev',
-    separator: true
-  },
-  {
-    title: 'Invite Friends',
-    icon: 'person_add',
-    link: 'https://awesome.quasar.dev',
-  },
-  {
-    title: 'Telegram Feathers',
-    icon: 'question_mark',
-    link: 'https://awesome.quasar.dev',
-  },
-];
+const route = useRoute();
+const authStore = useAuthStore();
 
-const leftDrawerOpen = ref(false);
+const navTitle = "PocketChat";
 
-function toggleLeftDrawer() {
-  leftDrawerOpen.value = !leftDrawerOpen.value;
-}
+const activeTab = ref("chats");
+watch(
+  () => route.path,
+  (path) => {
+    if (path === "/chats" || path.startsWith("/chats/")) activeTab.value = "chats";
+    else if (path === "/contacts") activeTab.value = "contacts";
+  },
+  { immediate: true }
+);
+
+const initials = computed(() => {
+  const name = authStore.auth?.user?.username ?? "?";
+  const parts = String(name).trim().split(/\s+/);
+  if (parts.length >= 2) {
+    const a = parts[0]?.[0] ?? "";
+    const b = parts[parts.length - 1]?.[0] ?? "";
+    return (a + b).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+});
 </script>
