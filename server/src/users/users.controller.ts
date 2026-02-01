@@ -1,3 +1,4 @@
+import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import {
   Body,
   Controller,
@@ -8,11 +9,8 @@ import {
   Post,
   UsePipes,
 } from '@nestjs/common';
-import type { UserDto } from './dto/user.dto';
-import { UserCreateDto } from './dto/create-user.dto';
-import { UserUpdateDto } from './dto/update-user.dto';
+import type { UserCreateDto, UserDto, UserUpdateDto } from './dto/user.dto';
 import { UsersService } from './users.service';
-import { ZodValidationPipe } from '@anatine/zod-nestjs';
 
 @Controller('users')
 export class UsersController {
