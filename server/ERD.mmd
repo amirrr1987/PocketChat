@@ -1,0 +1,67 @@
+---
+config:
+  theme: default
+  look: classic
+  layout: dagre
+---
+erDiagram
+    UserEntity {
+        string id PK
+        string username
+        string email
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    ChatBaseEntity {
+        string id PK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    SingleChatEntity {
+        string id PK
+        string user1Id FK
+        string user2Id FK
+    }
+
+    GroupEntity {
+        string id PK
+        string title
+        string ownerId FK
+    }
+
+    GroupMemberEntity {
+        string id PK
+        string groupId FK
+        string userId FK
+        string role
+        datetime joinedAt
+        datetime leftAt
+    }
+
+    MessageEntity {
+        string id PK
+        string senderId FK
+        string singleChatId FK
+        string groupId FK
+        string content
+        datetime createdAt
+        datetime editedAt
+        datetime deletedAt
+    }
+
+    %% Inheritance
+    ChatBaseEntity ||--|{ SingleChatEntity : extends
+    ChatBaseEntity ||--|{ GroupEntity : extends
+
+    %% Associations
+    SingleChatEntity }|..|{ UserEntity : "user1"
+    SingleChatEntity }|..|{ UserEntity : "user2"
+
+    GroupEntity ||--|{ GroupMemberEntity : has
+    GroupMemberEntity }|..|{ UserEntity : "member"
+
+    SingleChatEntity ||--|{ MessageEntity : has
+    GroupEntity ||--|{ MessageEntity : has
+    MessageEntity }|..|{ UserEntity : "sender"

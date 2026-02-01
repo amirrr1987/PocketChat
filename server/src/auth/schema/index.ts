@@ -1,14 +1,14 @@
-import { z } from 'zod';
-export const LoginSchema = z.object({
-  username: z.string().min(3),
-  password: z.string().min(8),
+import { userCreateSchema, userSchema } from '../../users/schema';
+export const LoginSchema = userSchema.omit({
+  createdAt: true,
+  updatedAt: true,
+  id: true,
 });
 
-export const RegisterSchema = z.object({
-  username: z.string().min(3),
-  password: z.string().min(8),
-});
+export const RegisterSchema = userCreateSchema;
 
-export const ForgotSchema = z.object({
-  username: z.string().min(3),
+export const ForgotSchema = userSchema.omit({
+  createdAt: true,
+  updatedAt: true,
+  id: true,
 });

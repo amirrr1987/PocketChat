@@ -8,16 +8,22 @@ import {
   Delete,
 } from '@nestjs/common';
 import { ChatsService } from './chats.service';
-import { CreateChatDto } from './dto/create-chat.dto';
+import { CreateGroupChatDto } from './dto/create-group-chat.dto';
+import { CreateSingleChatDto } from './dto/create-single-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
 
 @Controller('chats')
 export class ChatsController {
   constructor(private readonly chatsService: ChatsService) {}
 
-  @Post()
-  create(@Body() createChatDto: CreateChatDto) {
-    return this.chatsService.create(createChatDto);
+  @Post('group')
+  createGroup(@Body() createGroupChatDto: CreateGroupChatDto) {
+    return this.chatsService.createGroup(createGroupChatDto);
+  }
+
+  @Post('single')
+  createSingle(@Body() createSingleChatDto: CreateSingleChatDto) {
+    return this.chatsService.createSingle(createSingleChatDto);
   }
 
   @Get()
@@ -25,18 +31,36 @@ export class ChatsController {
     return this.chatsService.findAll();
   }
 
+  @Get('group/:id')
+  findGroup(@Param('id') id: string) {
+    return this.chatsService.findGroup(id);
+  }
+
+  @Get('single/:id')
+  findSingle(@Param('id') id: string) {
+    return this.chatsService.findSingle(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.chatsService.findOne(+id);
+    return this.chatsService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateChatDto: UpdateChatDto) {
-    return this.chatsService.update(+id, updateChatDto);
+  @Patch('group/:id')
+  updateGroup(
+    @Param('id') id: string,
+    @Body() updateChatDto: UpdateChatDto,
+  ) {
+    return this.chatsService.updateGroup(id, updateChatDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.chatsService.remove(+id);
+  @Delete('group/:id')
+  removeGroup(@Param('id') id: string) {
+    return this.chatsService.removeGroup(id);
+  }
+
+  @Delete('single/:id')
+  removeSingle(@Param('id') id: string) {
+    return this.chatsService.removeSingle(id);
   }
 }

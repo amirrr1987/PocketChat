@@ -1,23 +1,54 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ForgotDto, LoginDto, RegisterDto } from './dto/auth.dto';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
   ) {}
-  login(loginDto: LoginDto) {
-    return 'This action adds a new auth';
+
+  async register(registerDto: RegisterDto) {
+    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    const user = await this.usersService.create({
+      username: registerDto.username,
+      password: hashedPassword,
+    });
+    const access_token = this.jwtService.sign({
+      sub: user.id,
+      username: user.username,
+    });
+    return { access_token, user: { id: user.id, username: user.username } };
   }
 
-  register(registerDto: RegisterDto) {
-    return 'This action adds a new auth';
+  async login(loginDto: LoginDto) {
+    const user = await this.usersService.findByUsername(
+      loginDto.username,
+      true,
+    );
+    if (!user || !user.password) {
+      throw new UnauthorizedException('Invalid username or password');
+    }
+    const isMatch = await bcrypt.compare(loginDto.password, user.password);
+    if (!isMatch) {
+      throw new UnauthorizedException('Invalid username or password');
+    }
+    const access_token = this.jwtService.sign({
+      sub: user.id,
+      username: user.username,
+    });
+    return { access_token, user: { id: user.id, username: user.username } };
   }
 
-  forgot(forgotDto: ForgotDto) {
-    return 'This action adds a new auth';
+  async forgot(forgotDto: ForgotDto) {
+    const user = await this.usersService.findByUsername(forgotDto.username);
+    if (!user) {
+      return { message: 'If an account exists, you will receive instructions.' };
+    }
+    // TODO: send reset link (email, etc.)
+    return { message: 'If an account exists, you will receive instructions.' };
   }
 }
