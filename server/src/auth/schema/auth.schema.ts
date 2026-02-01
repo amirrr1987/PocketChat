@@ -1,4 +1,4 @@
-import { userCreateSchema, userSchema } from '../../users/schema';
+import { userCreateSchema, userSchema } from '../../users/schema/user.schema';
 export const LoginSchema = userSchema.omit({
   createdAt: true,
   updatedAt: true,

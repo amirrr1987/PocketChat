@@ -49,7 +49,10 @@ export class GroupMembersService {
     return member;
   }
 
-  async update(id: GroupMemberDto['id'], updateGroupMemberDto: GroupMemberUpdateDto) {
+  async update(
+    id: GroupMemberDto['id'],
+    updateGroupMemberDto: GroupMemberUpdateDto,
+  ) {
     await this.findOne(id);
     await this.groupMemberRepository.update(id, updateGroupMemberDto);
     return this.findOne(id);

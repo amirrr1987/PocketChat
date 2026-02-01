@@ -1,11 +1,6 @@
-import { z } from 'zod'
-const AuthSchema = z.object({
-  token: z.string(),
-  user: z.object({
-    id: z.string(),
-    username: z.string(),
-    email: z.email(),
-  }),
-})
+import { z } from 'zod';
+import { LoginSchema,ForgotSchema,RegisterSchema } from '@/schemas/auth.schema';
 
-export type IAuth = z.infer<typeof AuthSchema>
+export type LoginDto = z.infer<typeof LoginSchema>;
+export type RegisterDto = z.infer<typeof RegisterSchema>;
+export type ForgotDto = z.infer<typeof ForgotSchema>;

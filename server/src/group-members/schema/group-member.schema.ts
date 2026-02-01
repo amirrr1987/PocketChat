@@ -7,7 +7,7 @@ export const groupMemberSchema = z.object({
   id: uuid,
   groupId: uuid,
   userId: uuid,
-  role: z.nativeEnum(GroupRoleEnum),
+  role: z.enum(GroupRoleEnum),
   joinedAt: z.date(),
   leftAt: z.date().nullable(),
 });

@@ -1,27 +1,6 @@
-import { z } from "zod";
+import { z } from 'zod';
+import { CreateGroupChatSchema,CreateSingleChatSchema,UpdateChatSchema } from '@/schemas/chat.schema';
 
-const UserRefSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-});
-
-const MessageSchema = z.object({
-  id: z.string(),
-  conversationId: z.string(),
-  senderId: z.string(),
-  content: z.string(),
-  createdAt: z.string(),
-  read: z.boolean().optional(),
-});
-
-const ConversationSchema = z.object({
-  id: z.string(),
-  participants: z.array(UserRefSchema).min(1),
-  lastMessage: MessageSchema.nullable().optional(),
-  updatedAt: z.string(),
-  unreadCount: z.number().optional(),
-});
-
-export type IUserRef = z.infer<typeof UserRefSchema>;
-export type IMessage = z.infer<typeof MessageSchema>;
-export type IConversation = z.infer<typeof ConversationSchema>;
+export type CreateGroupChatDto = z.infer<typeof CreateGroupChatSchema>;
+export type CreateSingleChatDto = z.infer<typeof CreateSingleChatSchema>;
+export type UpdateChatDto = z.infer<typeof UpdateChatSchema>;

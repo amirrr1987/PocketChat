@@ -7,20 +7,30 @@ meta {
 post {
   url: {{base_url}}/chats/group
   body: json
-  auth: inherit
+  auth: bearer
 }
 
 headers {
   Content-Type: application/json
+  : 
+}
+
+auth:bearer {
+  token: {{token}}
 }
 
 body:json {
   {
-    "title": "My Group",
+    "title": "Kos",
     "ownerId": "{{user_id}}"
   }
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  sdf
 }

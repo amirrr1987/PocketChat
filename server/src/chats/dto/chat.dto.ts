@@ -3,7 +3,7 @@ import {
   CreateGroupChatSchema,
   CreateSingleChatSchema,
   UpdateChatSchema,
-} from '../schema';
+} from '../schema/chat.schema';
 
 export type GroupChatCreateDto = z.infer<typeof CreateGroupChatSchema>;
 export type SingleChatCreateDto = z.infer<typeof CreateSingleChatSchema>;

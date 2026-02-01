@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { ChatsModule } from './chats/chats.module';
 import { GroupMembersModule } from './group-members/group-members.module';
 import { MessagesModule } from './messages/messages.module';
 import { UserEntity } from './users/entities/user.entity';
@@ -33,6 +34,7 @@ import { MessageEntity } from './messages/entities/message.entity';
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     AuthModule,
+    ChatsModule,
     UsersModule,
     GroupMembersModule,
     MessagesModule,

@@ -7,7 +7,13 @@ import {
 
 type ZodParseResult =
   | { success: true; data: unknown }
-  | { success: false; error: { issues?: Array<{ path?: (string | number)[]; message?: string }>; errors?: unknown[] } };
+  | {
+      success: false;
+      error: {
+        issues?: Array<{ path?: (string | number)[]; message?: string }>;
+        errors?: unknown[];
+      };
+    };
 
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
@@ -25,16 +31,18 @@ export class ZodValidationPipe implements PipeTransform {
     }
     const error = parseResult.error;
     // Zod uses .issues (not .errors); support both for compatibility
-    const issues = error.issues ?? (error as { errors?: unknown[] }).errors ?? [];
+    const issues =
+      error.issues ?? (error as { errors?: unknown[] }).errors ?? [];
     const message = Array.isArray(issues)
-      ? issues
-          .map((issue: { path?: (string | number)[]; message?: string }) => {
+      ? issues.map(
+          (issue: { path?: (string | number)[]; message?: string }) => {
             const path =
               Array.isArray(issue.path) && issue.path.length > 0
                 ? issue.path.join('.')
                 : '(root)';
             return `${path}: ${issue.message ?? 'Invalid'}`;
-          })
+          },
+        )
       : ['Validation failed'];
     throw new BadRequestException(message);
   }

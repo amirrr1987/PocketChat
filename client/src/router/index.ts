@@ -18,12 +18,12 @@ const router = createRouter({
         {
           path: "chats",
           name: "chats",
-          component: () => import("@/views/ChatListPage.vue"),
+          component: () => import("@/views/ListChat.vue"),
         },
         {
           path: "chats/:id",
           name: "chat",
-          component: () => import("@/views/ChatSinglePage.vue"),
+          component: () => import("@/views/SingleChat.vue"),
         },
         {
           path: "contacts",
