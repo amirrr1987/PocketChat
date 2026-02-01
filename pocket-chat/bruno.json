@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "name": "pocket-chat",
+  "name": "PocketChat API",
   "type": "collection",
   "ignore": [
     "node_modules",

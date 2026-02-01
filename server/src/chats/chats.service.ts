@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import type {
+  ChatUpdateDto,
+  GroupChatCreateDto,
+  SingleChatCreateDto,
+} from './dto/chat.dto';
 import { GroupEntity } from './entities/group.entity';
 import { SingleChatEntity } from './entities/single-chat.entity';
-import { CreateGroupChatDto } from './dto/create-group-chat.dto';
-import { CreateSingleChatDto } from './dto/create-single-chat.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
 
 @Injectable()
 export class ChatsService {
@@ -16,12 +18,12 @@ export class ChatsService {
     private readonly singleChatRepository: Repository<SingleChatEntity>,
   ) {}
 
-  async createGroup(createGroupChatDto: CreateGroupChatDto) {
+  async createGroup(createGroupChatDto: GroupChatCreateDto) {
     const group = this.groupRepository.create(createGroupChatDto);
     return this.groupRepository.save(group);
   }
 
-  async createSingle(createSingleChatDto: CreateSingleChatDto) {
+  async createSingle(createSingleChatDto: SingleChatCreateDto) {
     const singleChat = this.singleChatRepository.create(createSingleChatDto);
     return this.singleChatRepository.save(singleChat);
   }
@@ -66,7 +68,7 @@ export class ChatsService {
     throw new NotFoundException(`Chat #${id} not found`);
   }
 
-  async updateGroup(id: string, updateChatDto: UpdateChatDto) {
+  async updateGroup(id: string, updateChatDto: ChatUpdateDto) {
     await this.findGroup(id);
     await this.groupRepository.update(id, updateChatDto);
     return this.findGroup(id);

@@ -1,11 +1,11 @@
 meta {
-  name: Create User
+  name: Update User
   type: http
-  seq: 1
+  seq: 4
 }
 
-post {
-  url: {{base_url}}/users
+patch {
+  url: {{base_url}}/users/{{user_id}}
   body: json
   auth: inherit
 }
@@ -16,8 +16,8 @@ headers {
 
 body:json {
   {
-    "username": "newuser1",
-    "password": "password123"
+    "username": "updateduser",
+    "password": "newpassword123"
   }
 }
 

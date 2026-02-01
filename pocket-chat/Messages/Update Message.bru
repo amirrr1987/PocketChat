@@ -1,11 +1,11 @@
 meta {
-  name: Create User
+  name: Update Message
   type: http
-  seq: 1
+  seq: 6
 }
 
-post {
-  url: {{base_url}}/users
+patch {
+  url: {{base_url}}/messages/{{user_id}}
   body: json
   auth: inherit
 }
@@ -16,12 +16,10 @@ headers {
 
 body:json {
   {
-    "username": "newuser1",
-    "password": "password123"
+    "content": "Updated message"
   }
 }
 
 settings {
   encodeUrl: true
-  timeout: 0
 }

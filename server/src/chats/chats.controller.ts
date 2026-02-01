@@ -1,28 +1,34 @@
+import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UsePipes,
 } from '@nestjs/common';
+import type {
+  ChatUpdateDto,
+  GroupChatCreateDto,
+  SingleChatCreateDto,
+} from './dto/chat.dto';
 import { ChatsService } from './chats.service';
-import { CreateGroupChatDto } from './dto/create-group-chat.dto';
-import { CreateSingleChatDto } from './dto/create-single-chat.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
 
 @Controller('chats')
 export class ChatsController {
   constructor(private readonly chatsService: ChatsService) {}
 
   @Post('group')
-  createGroup(@Body() createGroupChatDto: CreateGroupChatDto) {
+  @UsePipes(ZodValidationPipe)
+  createGroup(@Body() createGroupChatDto: GroupChatCreateDto) {
     return this.chatsService.createGroup(createGroupChatDto);
   }
 
   @Post('single')
-  createSingle(@Body() createSingleChatDto: CreateSingleChatDto) {
+  @UsePipes(ZodValidationPipe)
+  createSingle(@Body() createSingleChatDto: SingleChatCreateDto) {
     return this.chatsService.createSingle(createSingleChatDto);
   }
 
@@ -32,34 +38,37 @@ export class ChatsController {
   }
 
   @Get('group/:id')
+  @UsePipes(ZodValidationPipe)
   findGroup(@Param('id') id: string) {
     return this.chatsService.findGroup(id);
   }
 
   @Get('single/:id')
+  @UsePipes(ZodValidationPipe)
   findSingle(@Param('id') id: string) {
     return this.chatsService.findSingle(id);
   }
 
   @Get(':id')
+  @UsePipes(ZodValidationPipe)
   findOne(@Param('id') id: string) {
     return this.chatsService.findOne(id);
   }
 
   @Patch('group/:id')
-  updateGroup(
-    @Param('id') id: string,
-    @Body() updateChatDto: UpdateChatDto,
-  ) {
+  @UsePipes(ZodValidationPipe)
+  updateGroup(@Param('id') id: string, @Body() updateChatDto: ChatUpdateDto) {
     return this.chatsService.updateGroup(id, updateChatDto);
   }
 
   @Delete('group/:id')
+  @UsePipes(ZodValidationPipe)
   removeGroup(@Param('id') id: string) {
     return this.chatsService.removeGroup(id);
   }
 
   @Delete('single/:id')
+  @UsePipes(ZodValidationPipe)
   removeSingle(@Param('id') id: string) {
     return this.chatsService.removeSingle(id);
   }

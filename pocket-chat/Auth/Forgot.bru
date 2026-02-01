@@ -1,11 +1,11 @@
 meta {
-  name: Create User
+  name: Forgot
   type: http
-  seq: 1
+  seq: 3
 }
 
 post {
-  url: {{base_url}}/users
+  url: {{base_url}}/auth/forgot
   body: json
   auth: inherit
 }
@@ -16,12 +16,11 @@ headers {
 
 body:json {
   {
-    "username": "newuser1",
+    "username": "testuser",
     "password": "password123"
   }
 }
 
 settings {
   encodeUrl: true
-  timeout: 0
 }

@@ -1,0 +1,15 @@
+meta {
+  name: Remove Single Chat
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{base_url}}/chats/single/{{chat_id}}
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

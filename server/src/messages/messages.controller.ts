@@ -1,23 +1,29 @@
+import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
   Query,
+  UsePipes,
 } from '@nestjs/common';
+import type {
+  MessageCreateDto,
+  MessageDto,
+  MessageUpdateDto,
+} from './dto/message.dto';
 import { MessagesService } from './messages.service';
-import { CreateMessageDto } from './dto/create-message.dto';
-import { UpdateMessageDto } from './dto/update-message.dto';
 
 @Controller('messages')
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
   @Post()
-  create(@Body() createMessageDto: CreateMessageDto) {
+  @UsePipes(ZodValidationPipe)
+  create(@Body() createMessageDto: MessageCreateDto) {
     return this.messagesService.create(createMessageDto);
   }
 
@@ -33,20 +39,23 @@ export class MessagesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  @UsePipes(ZodValidationPipe)
+  findOne(@Param('id') id: MessageDto['id']) {
     return this.messagesService.findOne(id);
   }
 
   @Patch(':id')
+  @UsePipes(ZodValidationPipe)
   update(
-    @Param('id') id: string,
-    @Body() updateMessageDto: UpdateMessageDto,
+    @Param('id') id: MessageDto['id'],
+    @Body() updateMessageDto: MessageUpdateDto,
   ) {
     return this.messagesService.update(id, updateMessageDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @UsePipes(ZodValidationPipe)
+  remove(@Param('id') id: MessageDto['id']) {
     return this.messagesService.remove(id);
   }
 }

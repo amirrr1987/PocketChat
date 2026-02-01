@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import type {
+  GroupMemberCreateDto,
+  GroupMemberDto,
+  GroupMemberUpdateDto,
+} from './dto/group-member.dto';
 import { GroupMemberEntity } from './entities/group-member.entity';
-import { CreateGroupMemberDto } from './dto/create-group-member.dto';
-import { UpdateGroupMemberDto } from './dto/update-group-member.dto';
 
 @Injectable()
 export class GroupMembersService {
@@ -12,7 +15,7 @@ export class GroupMembersService {
     private readonly groupMemberRepository: Repository<GroupMemberEntity>,
   ) {}
 
-  create(createGroupMemberDto: CreateGroupMemberDto) {
+  create(createGroupMemberDto: GroupMemberCreateDto) {
     const member = this.groupMemberRepository.create(createGroupMemberDto);
     return this.groupMemberRepository.save(member);
   }
@@ -37,7 +40,7 @@ export class GroupMembersService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: GroupMemberDto['id']) {
     const member = await this.groupMemberRepository.findOne({
       where: { id },
       relations: ['group', 'user'],
@@ -46,13 +49,13 @@ export class GroupMembersService {
     return member;
   }
 
-  async update(id: string, updateGroupMemberDto: UpdateGroupMemberDto) {
+  async update(id: GroupMemberDto['id'], updateGroupMemberDto: GroupMemberUpdateDto) {
     await this.findOne(id);
     await this.groupMemberRepository.update(id, updateGroupMemberDto);
     return this.findOne(id);
   }
 
-  async remove(id: string) {
+  async remove(id: GroupMemberDto['id']) {
     await this.findOne(id);
     await this.groupMemberRepository.delete(id);
   }

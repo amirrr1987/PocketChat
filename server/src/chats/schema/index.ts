@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-const uuid = z.string().uuid();
+const uuid = z.uuid();
+
+export const chatIdSchema = uuid;
 
 export const CreateGroupChatSchema = z.object({
   title: z.string().min(1),

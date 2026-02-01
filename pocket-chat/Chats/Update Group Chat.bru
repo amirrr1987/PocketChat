@@ -1,11 +1,11 @@
 meta {
-  name: Create User
+  name: Update Group Chat
   type: http
-  seq: 1
+  seq: 7
 }
 
-post {
-  url: {{base_url}}/users
+patch {
+  url: {{base_url}}/chats/group/{{chat_id}}
   body: json
   auth: inherit
 }
@@ -16,12 +16,10 @@ headers {
 
 body:json {
   {
-    "username": "newuser1",
-    "password": "password123"
+    "title": "Updated Group Title"
   }
 }
 
 settings {
   encodeUrl: true
-  timeout: 0
 }

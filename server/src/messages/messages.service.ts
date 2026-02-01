@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import type {
+  MessageCreateDto,
+  MessageDto,
+  MessageUpdateDto,
+} from './dto/message.dto';
 import { MessageEntity } from './entities/message.entity';
-import { CreateMessageDto } from './dto/create-message.dto';
-import { UpdateMessageDto } from './dto/update-message.dto';
 
 @Injectable()
 export class MessagesService {
@@ -12,7 +15,7 @@ export class MessagesService {
     private readonly messageRepository: Repository<MessageEntity>,
   ) {}
 
-  create(createMessageDto: CreateMessageDto) {
+  create(createMessageDto: MessageCreateDto) {
     const message = this.messageRepository.create(createMessageDto);
     return this.messageRepository.save(message);
   }
@@ -39,7 +42,7 @@ export class MessagesService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: MessageDto['id']) {
     const message = await this.messageRepository.findOne({
       where: { id },
       relations: ['sender', 'singleChat', 'group'],
@@ -48,7 +51,7 @@ export class MessagesService {
     return message;
   }
 
-  async update(id: string, updateMessageDto: UpdateMessageDto) {
+  async update(id: MessageDto['id'], updateMessageDto: MessageUpdateDto) {
     await this.findOne(id);
     await this.messageRepository.update(id, {
       ...updateMessageDto,
@@ -57,7 +60,7 @@ export class MessagesService {
     return this.findOne(id);
   }
 
-  async remove(id: string) {
+  async remove(id: MessageDto['id']) {
     await this.findOne(id);
     await this.messageRepository.update(id, { deletedAt: new Date() });
     return this.findOne(id);

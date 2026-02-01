@@ -1,23 +1,29 @@
+import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
   Query,
+  UsePipes,
 } from '@nestjs/common';
+import type {
+  GroupMemberCreateDto,
+  GroupMemberDto,
+  GroupMemberUpdateDto,
+} from './dto/group-member.dto';
 import { GroupMembersService } from './group-members.service';
-import { CreateGroupMemberDto } from './dto/create-group-member.dto';
-import { UpdateGroupMemberDto } from './dto/update-group-member.dto';
 
 @Controller('group-members')
 export class GroupMembersController {
   constructor(private readonly groupMembersService: GroupMembersService) {}
 
   @Post()
-  create(@Body() createGroupMemberDto: CreateGroupMemberDto) {
+  @UsePipes(ZodValidationPipe)
+  create(@Body() createGroupMemberDto: GroupMemberCreateDto) {
     return this.groupMembersService.create(createGroupMemberDto);
   }
 
@@ -29,20 +35,23 @@ export class GroupMembersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  @UsePipes(ZodValidationPipe)
+  findOne(@Param('id') id: GroupMemberDto['id']) {
     return this.groupMembersService.findOne(id);
   }
 
   @Patch(':id')
+  @UsePipes(ZodValidationPipe)
   update(
-    @Param('id') id: string,
-    @Body() updateGroupMemberDto: UpdateGroupMemberDto,
+    @Param('id') id: GroupMemberDto['id'],
+    @Body() updateGroupMemberDto: GroupMemberUpdateDto,
   ) {
     return this.groupMembersService.update(id, updateGroupMemberDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @UsePipes(ZodValidationPipe)
+  remove(@Param('id') id: GroupMemberDto['id']) {
     return this.groupMembersService.remove(id);
   }
 }

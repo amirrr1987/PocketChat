@@ -1,11 +1,11 @@
 meta {
-  name: Get All User
+  name: Find Single Chat
   type: http
-  seq: 1
+  seq: 5
 }
 
 get {
-  url: http://localhost:5050/api/v1/users
+  url: {{base_url}}/chats/single/{{chat_id}}
   body: none
   auth: inherit
 }

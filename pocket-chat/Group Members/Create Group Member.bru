@@ -1,11 +1,11 @@
 meta {
-  name: Create User
+  name: Create Group Member
   type: http
   seq: 1
 }
 
 post {
-  url: {{base_url}}/users
+  url: {{base_url}}/group-members
   body: json
   auth: inherit
 }
@@ -16,12 +16,12 @@ headers {
 
 body:json {
   {
-    "username": "newuser1",
-    "password": "password123"
+    "groupId": "{{group_id}}",
+    "userId": "{{user_id}}",
+    "role": "MEMBER"
   }
 }
 
 settings {
   encodeUrl: true
-  timeout: 0
 }

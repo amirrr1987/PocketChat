@@ -1,0 +1,15 @@
+meta {
+  name: Find All Chats
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/chats
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

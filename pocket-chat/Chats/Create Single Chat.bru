@@ -1,11 +1,11 @@
 meta {
-  name: Create User
+  name: Create Single Chat
   type: http
-  seq: 1
+  seq: 2
 }
 
 post {
-  url: {{base_url}}/users
+  url: {{base_url}}/chats/single
   body: json
   auth: inherit
 }
@@ -16,12 +16,11 @@ headers {
 
 body:json {
   {
-    "username": "newuser1",
-    "password": "password123"
+    "user1Id": "{{user_id}}",
+    "user2Id": "<user2-uuid>"
   }
 }
 
 settings {
   encodeUrl: true
-  timeout: 0
 }

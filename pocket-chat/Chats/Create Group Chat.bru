@@ -1,11 +1,11 @@
 meta {
-  name: Create User
+  name: Create Group Chat
   type: http
   seq: 1
 }
 
 post {
-  url: {{base_url}}/users
+  url: {{base_url}}/chats/group
   body: json
   auth: inherit
 }
@@ -16,12 +16,11 @@ headers {
 
 body:json {
   {
-    "username": "newuser1",
-    "password": "password123"
+    "title": "My Group",
+    "ownerId": "{{user_id}}"
   }
 }
 
 settings {
   encodeUrl: true
-  timeout: 0
 }

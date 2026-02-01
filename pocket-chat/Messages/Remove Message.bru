@@ -1,0 +1,15 @@
+meta {
+  name: Remove Message
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{base_url}}/messages/{{user_id}}
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

@@ -16,6 +16,6 @@ import { ChatsService } from './chats.service';
   ],
   controllers: [ChatsController],
   providers: [ChatsService],
-  exports: [ChatsService],
+  exports: [TypeOrmModule, ChatsService],
 })
 export class ChatsModule {}

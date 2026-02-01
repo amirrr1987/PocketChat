@@ -1,0 +1,15 @@
+meta {
+  name: Find One Message
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/messages/{{user_id}}
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

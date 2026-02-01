@@ -1,0 +1,15 @@
+meta {
+  name: Find By Group Chat
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/messages?groupChatId={{group_id}}
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
