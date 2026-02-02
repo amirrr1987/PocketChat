@@ -1,26 +1,22 @@
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AppService } from './app.service';
 
 @ApiTags('app')
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
+  @Get('connected')
   @ApiOperation({
-    summary: 'Health check',
-    description: 'Check if the API is running',
+    summary: 'Check if the API is connected',
+    description: 'Check if the API is connected',
   })
   @ApiResponse({
     status: 200,
-    description: 'API is running',
-    schema: {
-      type: 'string',
-      example: 'Hello World!',
-    },
+    description: 'API is connected',
   })
-  getHello(): string {
-    return this.appService.getHello();
+  isConnected(): boolean {
+    return this.appService.isConnected();
   }
 }

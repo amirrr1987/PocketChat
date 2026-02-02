@@ -1,14 +1,11 @@
 <template>
-  <div>
-    <NavBar title="PocketChat" fixed placeholder />
-    <NoticeBar left-icon="volume-o" :scrollable="false">
-      Stay connected, anywhere.
-    </NoticeBar>
-    <RouterView />
-  </div>
+  <ion-page>
+    <ion-content>
+      <ion-router-outlet></ion-router-outlet>
+    </ion-content>
+  </ion-page>
 </template>
 
 <script setup lang="ts">
-import { NavBar, NoticeBar } from 'vant'
-import { RouterView } from 'vue-router'
+import { IonPage, IonRouterOutlet, IonContent } from "@ionic/vue";
 </script>

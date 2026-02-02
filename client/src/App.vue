@@ -1,12 +1,9 @@
 <template>
-  <ConfigProvider :theme="theme" tag="div">
-    <RouterView />
-  </ConfigProvider>
+  <ion-app>
+    <ion-router-outlet />
+  </ion-app>
 </template>
-<script setup lang="ts">
-import { RouterView } from "vue-router";
-import { ConfigProvider, type ConfigProviderTheme } from "vant";
-import { ref } from "vue";
 
-const theme = ref<ConfigProviderTheme>("light");
+<script setup lang="ts">
+import { IonApp, IonRouterOutlet } from '@ionic/vue';
 </script>

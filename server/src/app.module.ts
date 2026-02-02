@@ -3,16 +3,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { ChatsModule } from './chats/chats.module';
-import { GroupMembersModule } from './group-members/group-members.module';
-import { MessagesModule } from './messages/messages.module';
-import { UserEntity } from './users/entities/user.entity';
-import { UsersModule } from './users/users.module';
-import { ChatBaseEntity } from './chats/entities/chat-base.entity';
-import { SingleChatEntity } from './chats/entities/single-chat.entity';
-import { GroupEntity } from './chats/entities/group.entity';
-import { GroupMemberEntity } from './group-members/entities/group-member.entity';
-import { MessageEntity } from './messages/entities/message.entity';
+import { ChatModule } from './modules/chat-gateway/chat.module';
+import { ChatsModule } from './modules/chats/chats.module';
+import { GroupEntity } from './modules/chats/entities/group.entity';
+import { SingleChatEntity } from './modules/chats/entities/single-chat.entity';
+import { GroupMemberEntity } from './modules/group-members/entities/group-member.entity';
+import { GroupMembersModule } from './modules/group-members/group-members.module';
+import { MessageEntity } from './modules/message/entities/message.entity';
+import { MessagesModule } from './modules/message/messages.module';
+import { UserEntity } from './modules/user/entities/user.entity';
+import { UsersModule } from './modules/user/users.module';
 
 @Module({
   imports: [
@@ -25,7 +25,6 @@ import { MessageEntity } from './messages/entities/message.entity';
       database: process.env.DB_DATABASE ?? 'pocket_chat',
       entities: [
         UserEntity,
-        ChatBaseEntity,
         SingleChatEntity,
         GroupEntity,
         GroupMemberEntity,
@@ -34,6 +33,7 @@ import { MessageEntity } from './messages/entities/message.entity';
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     AuthModule,
+    ChatModule,
     ChatsModule,
     UsersModule,
     GroupMembersModule,

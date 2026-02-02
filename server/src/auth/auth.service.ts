@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import type { ForgotDto, LoginDto, RegisterDto } from './dto/auth.dto';
-import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { UsersService } from '../modules/user/users.service';
+import type { ForgotDto, LoginDto, RegisterDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +20,9 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.usersService.findByUsername(loginDto.username);
+    const user = await this.usersService.findByUsernameWithPassword(
+      loginDto.username,
+    );
     if (!user || !user.password) {
       throw new UnauthorizedException('Invalid username or password');
     }
@@ -36,7 +38,9 @@ export class AuthService {
   }
 
   async forgot(forgotDto: ForgotDto) {
-    const user = await this.usersService.findByUsername(forgotDto.username);
+    const user = await this.usersService.findByUsernameWithPassword(
+      forgotDto.username,
+    );
     if (!user) {
       return {
         message: 'If an account exists, you will receive instructions.',
