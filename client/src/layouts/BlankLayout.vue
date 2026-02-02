@@ -32,30 +32,12 @@
       </ion-content>
     </ion-menu>
 
-    <ion-tabs id="main-content">
-      <ion-router-outlet></ion-router-outlet>
-      <ion-tab-bar slot="bottom">
-        <ion-tab-button tab="chats" href="/chats">
-          <ion-icon aria-hidden="true" :icon="chatbox" />
-          <ion-label>{{ t("nav.chats") }}</ion-label>
-        </ion-tab-button>
-
-        <ion-tab-button tab="contacts" href="/contacts">
-          <ion-icon aria-hidden="true" :icon="people" />
-          <ion-label>{{ t("nav.contacts") }}</ion-label>
-        </ion-tab-button>
-      </ion-tab-bar>
-    </ion-tabs>
+    <ion-router-outlet></ion-router-outlet>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import {
-  IonTabBar,
-  IonTabButton,
-  IonTabs,
-  IonLabel,
-  IonIcon,
   IonPage,
   IonRouterOutlet,
   IonMenu,
@@ -66,13 +48,12 @@ import {
   IonList,
   IonItem,
   menuController,
-  IonImg,
 } from "@ionic/vue";
 import { people, chatbox, settings, logOut } from "ionicons/icons";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-const { t } = useI18n();
 
+const { t } = useI18n();
 const router = useRouter();
 
 const navigateTo = async (path: string) => {

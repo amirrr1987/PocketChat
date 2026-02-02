@@ -1,0 +1,108 @@
+export default {
+  // Common
+  common: {
+    save: "ذخیره",
+    cancel: "لغو",
+    delete: "حذف",
+    edit: "ویرایش",
+    back: "بازگشت",
+    next: "بعدی",
+    done: "تمام",
+    search: "جستجو",
+    loading: "در حال بارگذاری...",
+    error: "خطا",
+    success: "موفق",
+    pullToRefresh: "برای به‌روزرسانی بکشید",
+    refreshing: "در حال به‌روزرسانی...",
+  },
+
+  // Navigation
+  nav: {
+    chats: "چت‌ها",
+    contacts: "مخاطبین",
+    settings: "تنظیمات",
+    logout: "خروج",
+    menu: "منو",
+  },
+
+  // Settings
+  settings: {
+    title: "تنظیمات",
+    language: "زبان",
+    languageDescription: "زبان برنامه را انتخاب کنید",
+    persian: "فارسی",
+    english: "انگلیسی",
+    appearance: "ظاهر",
+    notifications: "اعلان‌ها",
+    privacy: "حریم خصوصی",
+    about: "درباره",
+    version: "نسخه",
+    darkMode: "حالت تاریک",
+    darkModeDescription: "فعال/غیرفعال کردن تم تاریک",
+    pushNotifications: "اعلان‌های فوری",
+    pushNotificationsDescription: "دریافت اعلان‌های فوری",
+    emailNotifications: "اعلان‌های ایمیل",
+    emailNotificationsDescription: "دریافت اعلان‌های ایمیل",
+    privacySettings: "تنظیمات حریم خصوصی",
+    privacySettingsDescription: "مدیریت تنظیمات حریم خصوصی",
+    blockedContacts: "مخاطبین مسدود شده",
+    blockedContactsDescription: "مدیریت کاربران مسدود شده",
+    aboutDescription: "نسخه و اطلاعات برنامه",
+  },
+
+  // Auth
+  auth: {
+    login: "ورود",
+    register: "ثبت‌نام",
+    email: "ایمیل",
+    password: "رمز عبور",
+    confirmPassword: "تأیید رمز عبور",
+    forgotPassword: "رمز عبور را فراموش کرده‌ام",
+    alreadyHaveAccount: "قبلاً حساب کاربری دارید؟",
+    dontHaveAccount: "حساب کاربری ندارید؟",
+    username: "نام کاربری",
+    welcomeBack: "خوش آمدید",
+    signInToContinue: "وارد شوید تا ادامه دهید",
+    welcomeToApp: "به برنامه ما خوش آمدید",
+    createAccountToContinue: "برای ادامه حساب کاربری بسازید",
+    enterUsername: "نام کاربری خود را وارد کنید",
+    enterPassword: "رمز عبور خود را وارد کنید",
+    enterConfirmPassword: "رمز عبور تأیید را وارد کنید",
+    showHidePassword: "نمایش/مخفی کردن",
+    signUp: "ثبت‌نام",
+    signIn: "ورود",
+    loginSuccess: "ورود موفقیت‌آمیز بود",
+    loginFailed: "ورود ناموفق بود",
+    registerSuccess: "ثبت‌نام موفقیت‌آمیز بود",
+    registerFailed: "ثبت‌نام ناموفق بود",
+    validation: {
+      usernameRequired: "نام کاربری الزامی است",
+      usernameMinLength: "حداقل ۳ کاراکتر",
+      passwordRequired: "رمز عبور الزامی است",
+      passwordMinLength: "حداقل ۶ کاراکتر",
+      confirmPasswordRequired: "تأیید رمز عبور الزامی است",
+      passwordsDoNotMatch: "رمزهای عبور مطابقت ندارند",
+    },
+  },
+
+  // Chat
+  chat: {
+    typeMessage: "پیام بنویسید",
+    connecting: "در حال اتصال...",
+    online: "آنلاین",
+    offline: "آفلاین",
+    pinnedMessage: "پیام پین شده",
+    reply: "پاسخ",
+    send: "ارسال",
+    attach: "ضمیمه",
+    emoji: "ایموجی",
+    voice: "صدا",
+  },
+
+  // Contacts
+  contacts: {
+    title: "مخاطبین",
+    addContact: "افزودن مخاطب",
+    noContacts: "مخاطبی وجود ندارد",
+  },
+};

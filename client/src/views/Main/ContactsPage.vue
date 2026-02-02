@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-menu-button menu="main-menu"></ion-menu-button>
         </ion-buttons>
-        <ion-title> Contacts</ion-title>
+        <ion-title>{{ t("nav.contacts") }}</ion-title>
         <ion-buttons slot="end">
           <ion-button>
             <ion-icon :icon="search"></ion-icon>
@@ -14,6 +14,15 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh">
+        <ion-refresher-content
+          :pulling-icon="chevronDownCircleOutline"
+          :pulling-text="t('common.pullToRefresh')"
+          refreshing-spinner="circular"
+          :refreshing-text="t('common.refreshing')"
+        ></ion-refresher-content>
+      </ion-refresher>
+
       <ion-list>
         <template v-for="contact in contacts" :key="contact.id">
           <ion-item-sliding>
@@ -42,6 +51,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import {
   IonPage,
   IonHeader,
@@ -60,10 +70,13 @@ import {
   IonButton,
   IonFab,
   IonFabButton,
+  IonRefresher,
+  IonRefresherContent,
 } from "@ionic/vue";
-import { ellipse, search, add } from "ionicons/icons";
-
-const contacts = [
+import { ellipse, search, add, chevronDownCircleOutline } from "ionicons/icons";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+const contacts = ref([
   {
     id: 1,
     name: "John Doe",
@@ -118,5 +131,17 @@ const contacts = [
     lastSeen: "3 days ago",
     avatar: "https://placehold.co/40x40/9c27b0/ffffff?text=AD",
   },
-];
+]);
+
+const handleRefresh = async (event: CustomEvent) => {
+  // Simulate async operation (e.g., fetching new contacts from API)
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  // Here you would typically fetch new data from your API
+  // For now, we'll just refresh the existing data
+  // Example: await fetchContacts();
+
+  // Complete the refresh
+  (event.target as HTMLIonRefresherElement).complete();
+};
 </script>

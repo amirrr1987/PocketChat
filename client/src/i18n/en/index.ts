@@ -1,0 +1,108 @@
+export default {
+  // Common
+  common: {
+    save: "Save",
+    cancel: "Cancel",
+    delete: "Delete",
+    edit: "Edit",
+    back: "Back",
+    next: "Next",
+    done: "Done",
+    search: "Search",
+    loading: "Loading...",
+    error: "Error",
+    success: "Success",
+    pullToRefresh: "Pull to refresh",
+    refreshing: "Refreshing...",
+  },
+
+  // Navigation
+  nav: {
+    chats: "Chats",
+    contacts: "Contacts",
+    settings: "Settings",
+    logout: "Logout",
+    menu: "Menu",
+  },
+
+  // Settings
+  settings: {
+    title: "Settings",
+    language: "Language",
+    languageDescription: "Select your preferred language",
+    persian: "Persian",
+    english: "English",
+    appearance: "Appearance",
+    notifications: "Notifications",
+    privacy: "Privacy",
+    about: "About",
+    version: "Version",
+    darkMode: "Dark Mode",
+    darkModeDescription: "Toggle dark theme",
+    pushNotifications: "Push Notifications",
+    pushNotificationsDescription: "Receive push notifications",
+    emailNotifications: "Email Notifications",
+    emailNotificationsDescription: "Receive email notifications",
+    privacySettings: "Privacy Settings",
+    privacySettingsDescription: "Manage your privacy preferences",
+    blockedContacts: "Blocked Contacts",
+    blockedContactsDescription: "Manage blocked users",
+    aboutDescription: "App version and information",
+  },
+
+  // Auth
+  auth: {
+    login: "Login",
+    register: "Register",
+    email: "Email",
+    password: "Password",
+    confirmPassword: "Confirm Password",
+    forgotPassword: "Forgot Password",
+    alreadyHaveAccount: "Already have an account?",
+    dontHaveAccount: "Don't have an account?",
+    username: "Username",
+    welcomeBack: "Welcome back",
+    signInToContinue: "Sign in to continue",
+    welcomeToApp: "Welcome to our app",
+    createAccountToContinue: "Create an account to continue",
+    enterUsername: "Enter your username",
+    enterPassword: "Enter your password",
+    enterConfirmPassword: "Enter your confirm password",
+    showHidePassword: "Show/hide",
+    signUp: "Sign up",
+    signIn: "Sign in",
+    loginSuccess: "Login successful",
+    loginFailed: "Login failed",
+    registerSuccess: "Registration successful",
+    registerFailed: "Registration failed",
+    validation: {
+      usernameRequired: "Username is required",
+      usernameMinLength: "Minimum 3 characters",
+      passwordRequired: "Password is required",
+      passwordMinLength: "Minimum 6 characters",
+      confirmPasswordRequired: "Confirm password is required",
+      passwordsDoNotMatch: "Passwords do not match",
+    },
+  },
+
+  // Chat
+  chat: {
+    typeMessage: "Type a message",
+    connecting: "Connecting...",
+    online: "Online",
+    offline: "Offline",
+    pinnedMessage: "Pinned Message",
+    reply: "Reply",
+    send: "Send",
+    attach: "Attach",
+    emoji: "Emoji",
+    voice: "Voice",
+  },
+
+  // Contacts
+  contacts: {
+    title: "Contacts",
+    addContact: "Add Contact",
+    noContacts: "No contacts",
+  },
+};

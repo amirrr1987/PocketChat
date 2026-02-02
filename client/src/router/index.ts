@@ -3,8 +3,8 @@ import { RouteRecordRaw } from "vue-router";
 import MainLayout from "../layouts/MainLayout.vue";
 import AuthLayout from "../layouts/AuthLayout.vue";
 import ChatLayout from "../layouts/ChatLayout.vue";
+import BlankLayout from "../layouts/BlankLayout.vue";
 const routes: Array<RouteRecordRaw> = [
-
   {
     path: "/",
     component: MainLayout,
@@ -20,6 +20,20 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: "contacts",
         component: () => import("@/views/Main/ContactsPage.vue"),
+      },
+    ],
+  },
+  {
+    path: "/app",
+    component: BlankLayout,
+    children: [
+      {
+        path: "",
+        redirect: "/app/settings",
+      },
+      {
+        path: "settings",
+        component: () => import("@/views/Main/SettingsPage.vue"),
       },
     ],
   },

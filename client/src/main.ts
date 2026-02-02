@@ -28,19 +28,24 @@ import "@ionic/vue/css/display.css";
  */
 
 /* @import '@ionic/vue/css/palettes/dark.always.css'; */
-/* @import '@ionic/vue/css/palettes/dark.class.css'; */
-import "@ionic/vue/css/palettes/dark.system.css";
+import "@ionic/vue/css/palettes/dark.class.css";
+/* @import '@ionic/vue/css/palettes/dark.system.css'; */
 
 /* Theme variables */
 import "./theme/variables.css";
-
+import "./assets/styles/main.css";
 import * as Sentry from "@sentry/vue";
-import { BrowserTracing } from "@sentry/tracing";
+import { i18n } from "./i18n";
+import { initializeDarkMode } from "./composables/useDarkMode";
+
+// Initialize dark mode before app mounts
+initializeDarkMode();
 
 const app = createApp(App);
 app.use(IonicVue);
 app.use(router);
 
+app.use(i18n);
 Sentry.init({
   app,
   dsn: "https://examplePublicKey@o0.ingest.sentry.io/0",

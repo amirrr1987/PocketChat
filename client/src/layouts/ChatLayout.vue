@@ -45,7 +45,7 @@
         >
           <ion-icon :icon="pin" slot="start" color="primary"></ion-icon>
           <ion-label>
-            <h3>Pinned Message</h3>
+            <h3>{{ t("chat.pinnedMessage") }}</h3>
             <p>{{ pinnedMessage.link }}</p>
           </ion-label>
           <ion-button fill="clear" slot="end" @click="dismissPinned">
@@ -61,7 +61,7 @@
 
           <ion-input
             v-model="messageText"
-            placeholder="Type a message"
+            :placeholder="t('chat.typeMessage')"
             class="message-input"
             @keyup.enter="sendMessage"
           ></ion-input>
@@ -116,11 +116,14 @@ import {
   mic,
   send,
 } from "ionicons/icons";
-import { ref } from "vue";
+import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 // Props برای اطلاعات تماس
 const contactName = ref("+98 939 195 9469");
-const contactStatus = ref("Connecting...");
+const contactStatus = computed(() => t("chat.connecting"));
 const contactAvatar = ref("https://placehold.co/40x40/4285f4/ffffff?text=AM");
 
 // Pinned Message

@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-menu-button menu="main-menu"></ion-menu-button>
         </ion-buttons>
-        <ion-title> Chats</ion-title>
+        <ion-title>{{ t("nav.chats") }}</ion-title>
         <ion-buttons slot="end">
           <ion-button>
             <ion-icon :icon="search"></ion-icon>
@@ -14,6 +14,15 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
+      <ion-refresher slot="foat" @ionRefresh="handleRefresh">
+        <ion-refresher-content
+          :pulling-icon="chevronDownCircleOutline"
+          :pulling-text="t('common.pullToRefresh')"
+          refreshing-spinner="circular"
+          :refreshing-text="t('common.refreshing')"
+        ></ion-refresher-content>
+      </ion-refresher>
+
       <ion-list>
         <template v-for="chat in chats" :key="chat.id">
           <ion-item-sliding>
@@ -42,6 +51,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
+import { useRouter } from "vue-router";
 import {
   IonPage,
   IonHeader,
@@ -60,17 +71,20 @@ import {
   IonFab,
   IonFabButton,
   IonButton,
-  } from "@ionic/vue";
-import { search, add } from "ionicons/icons";
-import { useRouter } from 'vue-router';
+  IonRefresher,
+  IonRefresherContent,
+} from "@ionic/vue";
+import { search, add, chevronDownCircleOutline } from "ionicons/icons";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
 const router = useRouter();
 
 const navigateTo = (path: string) => {
   router.push(path);
 };
 
-const chats = [
+const chats = ref([
   {
     id: 1,
     name: "John Doe",
@@ -151,5 +165,17 @@ const chats = [
       lastMessageTime: "12:00",
     },
   },
-];
+]);
+
+const handleRefresh = async (event: CustomEvent) => {
+  // Simulate async operation (e.g., fetching new chats from API)
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  // Here you would typically fetch new data from your API
+  // For now, we'll just refresh the existing data
+  // Example: await fetchChats();
+
+  // Complete the refresh
+  (event.target as HTMLIonRefresherElement).complete();
+};
 </script>
