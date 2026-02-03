@@ -78,7 +78,7 @@ export default defineConfig({
         name: "Araz Chat",
         short_name: "Araz Chat",
         description: "Araz Chat - Connect and communicate",
-        theme_color: "#6366f1",
+        theme_color: "#9333ea",
         background_color: "#ffffff",
         display: "standalone",
         icons: [
