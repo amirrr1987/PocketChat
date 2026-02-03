@@ -2,5 +2,26 @@
 http://ionicframework.com/docs/theming/ */
 
 :root {
-  --ion-font-family: 'IRANSansfanum', 'Poppins', sans-serif;
+  --ion-font-family: "IRANSansfanum", "Poppins", sans-serif;
+
+  /* رنگ بنفش اصلی */
+  --ion-color-primary: #9333ea;
+  --ion-color-primary-rgb: 147, 51, 234;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #822dd0;
+  --ion-color-primary-tint: #9e47ec;
+}
+
+/* کلاس برای استفاده مستقیم از رنگ بنفش */
+.primary-purple {
+  color: var(--ion-color-primary);
+}
+
+.bg-primary-purple {
+  background-color: var(--ion-color-primary);
+}
+
+.text-primary-purple {
+  color: var(--ion-color-primary);
 }
