@@ -23,6 +23,8 @@ export default {
     settings: "تنظیمات",
     logout: "خروج",
     menu: "منو",
+    account: "حساب کاربری",
+    profile: "پروفایل",
   },
 
   // Settings
@@ -104,5 +106,30 @@ export default {
     title: "مخاطبین",
     addContact: "افزودن مخاطب",
     noContacts: "مخاطبی وجود ندارد",
+    searchPlaceholder: "جستجوی مخاطبین...",
+    emptyStateDescription: "برای افزودن مخاطب جدید، دکمه + را فشار دهید",
+    lastSeen: "آخرین بازدید",
+  },
+
+  // Chats
+  chats: {
+    title: "چت‌ها",
+    noChats: "چتی وجود ندارد",
+    newChat: "چت جدید",
+    newGroup: "گروه جدید",
+    searchPlaceholder: "جستجوی چت‌ها...",
+    emptyStateMessage: "هنوز چتی ندارید",
+    emptyStateDescription: "برای شروع یک چت جدید، دکمه + را فشار دهید",
+  },
+
+  // Profile
+  profile: {
+    title: "پروفایل",
+    email: "ایمیل",
+    phone: "تلفن",
+    bio: "درباره",
+    editProfile: "ویرایش پروفایل",
+    changeAvatar: "تغییر تصویر پروفایل",
+    privacySettings: "تنظیمات حریم خصوصی",
   },
 };

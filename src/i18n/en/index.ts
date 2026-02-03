@@ -23,6 +23,8 @@ export default {
     settings: "Settings",
     logout: "Logout",
     menu: "Menu",
+    account: "Account",
+    profile: "Profile",
   },
 
   // Settings
@@ -104,5 +106,30 @@ export default {
     title: "Contacts",
     addContact: "Add Contact",
     noContacts: "No contacts",
+    searchPlaceholder: "Search contacts...",
+    emptyStateDescription: "Tap the + button to add a new contact",
+    lastSeen: "Last seen",
+  },
+
+  // Chats
+  chats: {
+    title: "Chats",
+    noChats: "No chats",
+    newChat: "New Chat",
+    newGroup: "New Group",
+    searchPlaceholder: "Search chats...",
+    emptyStateMessage: "No chats yet",
+    emptyStateDescription: "Tap the + button to start a new chat",
+  },
+
+  // Profile
+  profile: {
+    title: "Profile",
+    email: "Email",
+    phone: "Phone",
+    bio: "Bio",
+    editProfile: "Edit Profile",
+    changeAvatar: "Change Avatar",
+    privacySettings: "Privacy Settings",
   },
 };

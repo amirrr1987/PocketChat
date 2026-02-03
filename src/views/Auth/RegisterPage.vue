@@ -6,10 +6,13 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content fullscreen class="ion-padding">
-      <ion-text class="ion-text-center">
-        <h2>{{ t("auth.welcomeToApp") }}</h2>
-        <p class="ion-color-medium">{{ t("auth.createAccountToContinue") }}</p>
+    <ion-content fullscreen class="ion-padding auth-content">
+      <div class="auth-logo-container">
+        <img src="/logo.svg" alt="Logo" class="auth-logo" />
+      </div>
+      <ion-text class="ion-text-center auth-header">
+        <h2 class="auth-title">{{ t("auth.welcomeToApp") }}</h2>
+        <p class="auth-subtitle">{{ t("auth.createAccountToContinue") }}</p>
       </ion-text>
 
       <ion-list>
@@ -241,3 +244,66 @@ const handleRegister = async () => {
   }
 };
 </script>
+
+<style scoped>
+.auth-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100%;
+  padding: 32px 24px;
+}
+
+.auth-logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.auth-logo {
+  width: 80px;
+  height: 80px;
+}
+
+.auth-header {
+  margin-bottom: 32px;
+}
+
+.auth-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--ion-text-color);
+}
+
+.auth-subtitle {
+  font-size: 1rem;
+  color: var(--ion-color-medium);
+  margin: 0;
+}
+
+ion-list {
+  margin-bottom: 24px;
+}
+
+ion-button {
+  margin-top: 16px;
+  --padding-top: 14px;
+  --padding-bottom: 14px;
+  font-weight: 600;
+}
+
+ion-text p {
+  margin: 8px 0;
+}
+
+ion-text a {
+  color: var(--ion-color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+ion-text a:hover {
+  text-decoration: underline;
+}
+</style>

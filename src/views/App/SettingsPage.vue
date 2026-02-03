@@ -25,6 +25,18 @@
         </ion-toolbar>
       </ion-header>
 
+      <!-- User Avatar Section -->
+      <div class="settings-header">
+        <ion-avatar class="settings-avatar">
+          <img
+            src="https://placehold.co/80x80/4285f4/ffffff?text=JD"
+            alt="User"
+          />
+        </ion-avatar>
+        <h3 class="settings-user-name">John Doe</h3>
+        <p class="settings-user-email">john.doe@example.com</p>
+      </div>
+
       <ion-list>
         <!-- Language Section -->
         <ion-list-header>
@@ -293,5 +305,33 @@ ion-item-divider ion-label {
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.settings-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  background: var(--ion-background-color);
+}
+
+.settings-avatar {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 12px;
+  border: 3px solid var(--ion-color-primary);
+}
+
+.settings-user-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: var(--ion-text-color);
+}
+
+.settings-user-email {
+  font-size: 0.875rem;
+  color: var(--ion-color-medium);
+  margin: 0;
 }
 </style>

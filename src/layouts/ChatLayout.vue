@@ -187,6 +187,12 @@ const sendMessage = () => {
   --border-radius: 24px;
   --min-height: 40px;
   margin: 0 4px;
+  transition: all 0.2s ease-in-out;
+}
+
+.message-input:focus-within {
+  --background: var(--ion-background-color);
+  box-shadow: 0 0 0 2px var(--ion-color-primary-tint);
 }
 
 .emoji-button,
@@ -196,6 +202,15 @@ const sendMessage = () => {
   --padding-start: 8px;
   --padding-end: 8px;
   margin: 0;
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+}
+
+.emoji-button:active,
+.attach-button:active,
+.mic-button:active,
+.send-button:active {
+  transform: scale(0.95);
+  opacity: 0.8;
 }
 
 ion-title {
