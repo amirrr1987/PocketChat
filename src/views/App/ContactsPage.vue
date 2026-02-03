@@ -59,7 +59,6 @@
         </p>
         <ion-button
           v-if="!searchQuery"
-          @click="handleAddContact"
           color="primary"
           class="empty-state-button"
         >
@@ -127,8 +126,6 @@ import {
   IonAvatar,
   IonItemSliding,
   IonButton,
-  IonFab,
-  IonFabButton,
   IonRefresher,
   IonRefresherContent,
   IonSearchbar,
@@ -142,7 +139,6 @@ import {
   close,
   chevronDownCircleOutline,
   peopleOutline,
-  mail,
 } from "ionicons/icons";
 import { useI18n } from "vue-i18n";
 
