@@ -15,11 +15,11 @@ const routes: Array<RouteRecordRaw> = [
       },
       {
         path: "chats",
-        component: () => import("@/views/Main/ChatsPage.vue"),
+        component: () => import("@/views/App/ChatsPage.vue"),
       },
       {
         path: "contacts",
-        component: () => import("@/views/Main/ContactsPage.vue"),
+        component: () => import("@/views/App/ContactsPage.vue"),
       },
     ],
   },
@@ -33,7 +33,7 @@ const routes: Array<RouteRecordRaw> = [
       },
       {
         path: "settings",
-        component: () => import("@/views/Main/SettingsPage.vue"),
+        component: () => import("@/views/App/SettingsPage.vue"),
       },
     ],
   },
