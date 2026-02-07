@@ -15,9 +15,11 @@
       <ion-toolbar v-if="isSearchOpen">
         <ion-searchbar
           v-model="searchQuery"
-          :placeholder="t('contacts.searchPlaceholder')"
+          :placeholder="t('contacts.searchUsersPlaceholder')"
           show-clear-button="focus"
-          @ionClear="searchQuery = ''"
+          :debounce="400"
+          @ionInput="onSearchInput"
+          @ionClear="searchQuery = ''; searchResults = []"
         ></ion-searchbar>
       </ion-toolbar>
     </ion-header>
@@ -31,8 +33,17 @@
         ></ion-refresher-content>
       </ion-refresher>
 
+      <!-- Not logged in -->
+      <div v-if="!currentUser" class="empty-state-container">
+        <ion-icon :icon="peopleOutline" class="empty-state-icon"></ion-icon>
+        <h2 class="empty-state-title">{{ t("contacts.loginRequired") }}</h2>
+        <p class="empty-state-description">
+          {{ t("contacts.emptyStateDescription") }}
+        </p>
+      </div>
+
       <!-- Loading State -->
-      <div v-if="isLoading" class="loading-container">
+      <div v-else-if="isLoading && !isSearching" class="loading-container">
         <ion-skeleton-text
           animated
           style="width: 100%; height: 60px; margin-bottom: 8px"
@@ -54,41 +65,75 @@
         <p class="empty-state-description">{{ loadError }}</p>
       </div>
 
-      <!-- Empty State -->
-      <div
-        v-else-if="filteredContacts.length === 0"
-        class="empty-state-container"
-      >
-        <ion-icon :icon="peopleOutline" class="empty-state-icon"></ion-icon>
-        <h2 class="empty-state-title">{{ t("contacts.noContacts") }}</h2>
-        <p class="empty-state-description">
-          {{ t("contacts.emptyStateDescription") }}
-        </p>
-        <ion-button
-          v-if="!searchQuery"
-          color="primary"
-          class="empty-state-button"
-        >
-          <ion-icon :icon="add" slot="start"></ion-icon>
-          {{ t("contacts.addContact") }}
-        </ion-button>
-      </div>
+      <!-- Search results (when search open and query length >= 2) -->
+      <template v-else-if="isSearchOpen && searchQuery.trim().length >= 2">
+        <div v-if="isSearching" class="loading-container">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+        <div v-else-if="searchResults.length === 0" class="empty-state-container search-empty">
+          <p class="empty-state-description">{{ t("contacts.noSearchResults") }}</p>
+        </div>
+        <ion-list v-else class="contacts-list">
+          <ion-item
+            v-for="user in searchResults"
+            :key="user.id"
+            class="contact-item"
+            :button="!isContactUserId(user.id)"
+            @click="isContactUserId(user.id) ? undefined : handleAddContact(user)"
+          >
+            <ion-avatar slot="start" class="contact-avatar">
+              <img :src="avatarForUser(user.username)" :alt="user.username" />
+            </ion-avatar>
+            <ion-label>
+              <h3 class="contact-name">{{ user.username }}</h3>
+              <p v-if="isContactUserId(user.id)" class="contact-online">
+                {{ t("contacts.alreadyInContacts") }}
+              </p>
+            </ion-label>
+            <ion-button
+              v-if="!isContactUserId(user.id)"
+              fill="clear"
+              size="small"
+              :disabled="addingUserId === user.id"
+              @click.stop="handleAddContact(user)"
+            >
+              <ion-spinner v-if="addingUserId === user.id" name="crescent"></ion-spinner>
+              <ion-icon v-else :icon="add"></ion-icon>
+              {{ t("contacts.addToContacts") }}
+            </ion-button>
+          </ion-item>
+        </ion-list>
+      </template>
 
-      <!-- Contacts List -->
-      <ion-list v-else class="contacts-list">
-        <template v-for="contact in filteredContacts" :key="contact.id">
-          <ion-item-sliding>
+      <!-- My contacts list -->
+      <template v-else>
+        <!-- Empty State -->
+        <div
+          v-if="contacts.length === 0"
+          class="empty-state-container"
+        >
+          <ion-icon :icon="peopleOutline" class="empty-state-icon"></ion-icon>
+          <h2 class="empty-state-title">{{ t("contacts.noContacts") }}</h2>
+          <p class="empty-state-description">
+            {{ t("contacts.emptyStateDescription") }}
+          </p>
+        </div>
+
+        <!-- Contacts List -->
+        <ion-list v-else class="contacts-list">
+          <ion-item-sliding v-for="contact in filteredContacts" :key="contact.id">
             <ion-item
               :button="true"
               class="contact-item"
               @click="handleContactClick(contact)"
+              @contextmenu.prevent="onContactContextMenu(contact)"
+              @touchstart.passive="onContactTouchStart($event, contact)"
+              @touchend.passive="onContactTouchEnd"
+              @touchmove.passive="onContactTouchEnd"
+              @touchcancel.passive="onContactTouchEnd"
             >
-              <ion-avatar
-                aria-hidden="true"
-                slot="start"
-                class="contact-avatar"
-              >
-                <img alt="" :src="contact.avatar" />
+              <ion-avatar slot="start" class="contact-avatar">
+                <img :src="contact.avatar" :alt="contact.name" />
                 <ion-badge
                   :color="contact.isOnline ? 'success' : 'medium'"
                   class="online-status-badge"
@@ -100,28 +145,23 @@
                 <div class="contact-header">
                   <h3 class="contact-name">{{ contact.name }}</h3>
                 </div>
-                <div class="contact-info">
-                  <p
-                    v-if="!contact.isOnline && contact.lastSeen"
-                    class="contact-last-seen"
-                  >
-                    {{ t("contacts.lastSeen") }}: {{ contact.lastSeen }}
-                  </p>
-                  <p v-else-if="contact.isOnline" class="contact-online">
-                    {{ t("chat.online") }}
-                  </p>
-                </div>
+                <div class="contact-info"></div>
               </ion-label>
             </ion-item>
+            <ion-item-options side="end">
+              <ion-item-option color="danger" @click="handleRemoveContact(contact)">
+                {{ t("contacts.removeFromContacts") }}
+              </ion-item-option>
+            </ion-item-options>
           </ion-item-sliding>
-        </template>
-      </ion-list>
+        </ion-list>
+      </template>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import {
   IonPage,
@@ -137,13 +177,18 @@ import {
   IonIcon,
   IonAvatar,
   IonItemSliding,
+  IonItemOptions,
+  IonItemOption,
   IonButton,
   IonRefresher,
   IonRefresherContent,
   IonSearchbar,
   IonBadge,
   IonSkeletonText,
+  IonSpinner,
   toastController,
+  alertController,
+  actionSheetController,
 } from "@ionic/vue";
 import {
   ellipse,
@@ -154,17 +199,32 @@ import {
   peopleOutline,
 } from "ionicons/icons";
 import { useI18n } from "vue-i18n";
-import { fetchUsers, type User } from "@/api/users";
 import { getAuthUser } from "@/api/client";
+import {
+  fetchContacts,
+  addContactByUsername,
+  removeContact,
+  type Contact,
+} from "@/api/contacts";
+import { searchUsersByUsername, type User } from "@/api/users";
 import { createSingleChat } from "@/api/chats";
 
 const { t } = useI18n();
 const router = useRouter();
 
+const currentUser = ref(getAuthUser());
 const isSearchOpen = ref(false);
 const searchQuery = ref("");
+const searchResults = ref<User[]>([]);
+const isSearching = ref(false);
 const isLoading = ref(false);
 const loadError = ref("");
+const contacts = ref<Contact[]>([]);
+const addingUserId = ref<string | null>(null);
+
+const LONG_PRESS_MS = 500;
+let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+const justDidLongPress = ref(false);
 
 interface ContactItem {
   id: string;
@@ -174,27 +234,41 @@ interface ContactItem {
   lastSeen: string;
 }
 
-const contacts = ref<ContactItem[]>([]);
+function avatarForUsername(username: string): string {
+  const initial = username.slice(0, 2).toUpperCase();
+  return `https://placehold.co/40x40/4285f4/ffffff?text=${encodeURIComponent(initial)}`;
+}
 
-function toContactItem(u: User): ContactItem {
-  const initial = u.username.slice(0, 2).toUpperCase();
+function avatarForUser(username: string): string {
+  return avatarForUsername(username);
+}
+
+function toContactItem(c: Contact): ContactItem {
+  const name = c.contactUser?.username ?? "";
   return {
-    id: u.id,
-    name: u.username,
-    avatar: `https://placehold.co/40x40/4285f4/ffffff?text=${encodeURIComponent(initial)}`,
+    id: c.contactUserId,
+    name,
+    avatar: avatarForUsername(name),
     isOnline: false,
     lastSeen: "",
   };
 }
 
+const contactIds = computed(() => new Set(contacts.value.map((c) => c.contactUserId)));
+
+function isContactUserId(userId: string): boolean {
+  return contactIds.value.has(userId);
+}
+
 async function loadContacts() {
+  if (!currentUser.value) {
+    contacts.value = [];
+    return;
+  }
   isLoading.value = true;
   loadError.value = "";
   try {
-    const list = await fetchUsers();
-    const me = getAuthUser();
-    const others = me ? list.filter((u) => u.id !== me.id) : list;
-    contacts.value = others.map(toContactItem);
+    contacts.value = await fetchContacts();
   } catch (e: unknown) {
     loadError.value = e instanceof Error ? e.message : String(e);
     contacts.value = [];
@@ -203,31 +277,171 @@ async function loadContacts() {
   }
 }
 
-onMounted(loadContacts);
+function onSearchInput(ev: Event) {
+  const target = ev.target as HTMLIonSearchbarElement;
+  const q = (target.value ?? searchQuery.value ?? "").trim();
+  searchQuery.value = q;
+  if (q.length < 2) {
+    searchResults.value = [];
+    return;
+  }
+  isSearching.value = true;
+  searchUsersByUsername(q)
+    .then((list) => {
+      const me = currentUser.value?.id;
+      searchResults.value = me ? list.filter((u) => u.id !== me) : list;
+    })
+    .catch(() => {
+      searchResults.value = [];
+    })
+    .finally(() => {
+      isSearching.value = false;
+    });
+}
+
+onMounted(() => {
+  currentUser.value = getAuthUser();
+  loadContacts();
+});
+
+watch(currentUser, () => {
+  currentUser.value = getAuthUser();
+});
 
 const filteredContacts = computed(() => {
-  if (!searchQuery.value.trim()) return contacts.value;
+  const list = contacts.value.map(toContactItem);
+  if (!searchQuery.value.trim() || !isSearchOpen.value) return list;
   const query = searchQuery.value.toLowerCase();
-  return contacts.value.filter((contact) =>
-    contact.name.toLowerCase().includes(query)
-  );
+  return list.filter((c) => c.name.toLowerCase().includes(query));
 });
 
 const toggleSearch = () => {
   isSearchOpen.value = !isSearchOpen.value;
-  if (!isSearchOpen.value) searchQuery.value = "";
+  if (!isSearchOpen.value) {
+    searchQuery.value = "";
+    searchResults.value = [];
+  }
 };
 
 const handleRefresh = async (event: CustomEvent) => {
+  currentUser.value = getAuthUser();
   await loadContacts();
   (event.target as HTMLIonRefresherElement).complete();
 };
 
+const handleAddContact = async (user: User) => {
+  if (isContactUserId(user.id)) return;
+  addingUserId.value = user.id;
+  try {
+    await addContactByUsername(user.username);
+    await loadContacts();
+    const toast = await toastController.create({
+      message: t("contacts.addToContacts") + " ✓",
+      duration: 2000,
+      color: "success",
+    });
+    toast.present();
+    searchResults.value = searchResults.value.filter((u) => u.id !== user.id);
+  } catch (e: unknown) {
+    const toast = await toastController.create({
+      message: e instanceof Error ? e.message : String(e),
+      duration: 3000,
+      color: "danger",
+    });
+    toast.present();
+  } finally {
+    addingUserId.value = null;
+  }
+};
+
+const handleRemoveContact = async (contact: ContactItem) => {
+  const alert = await alertController.create({
+    header: t("contacts.removeFromContacts"),
+    message: `${t("contacts.removeFromContacts")} "${contact.name}"?`,
+    buttons: [
+      { text: t("common.cancel"), role: "cancel" },
+      {
+        text: t("common.delete"),
+        role: "destructive",
+        handler: async () => {
+          try {
+            await removeContact(contact.id);
+            await loadContacts();
+            const toast = await toastController.create({
+              message: t("contacts.removeFromContacts") + " ✓",
+              duration: 2000,
+              color: "success",
+            });
+            toast.present();
+          } catch (e: unknown) {
+            const toast = await toastController.create({
+              message: e instanceof Error ? e.message : String(e),
+              duration: 3000,
+              color: "danger",
+            });
+            toast.present();
+          }
+        },
+      },
+    ],
+  });
+  await alert.present();
+};
+
+async function onContactContextMenu(contact: ContactItem) {
+  const sheet = await actionSheetController.create({
+    header: contact.name,
+    buttons: [
+      { text: t("common.cancel"), role: "cancel" },
+      {
+        text: t("common.delete"),
+        role: "destructive",
+        handler: () => {
+          void handleRemoveContact(contact);
+        },
+      },
+    ],
+  });
+  await sheet.present();
+}
+
+function onContactTouchStart(_ev: TouchEvent, contact: ContactItem) {
+  longPressTimer = setTimeout(async () => {
+    longPressTimer = null;
+    justDidLongPress.value = true;
+    const sheet = await actionSheetController.create({
+      header: contact.name,
+      buttons: [
+        { text: t("common.cancel"), role: "cancel" },
+        {
+          text: t("common.delete"),
+          role: "destructive",
+          handler: () => {
+            void handleRemoveContact(contact);
+          },
+        },
+      ],
+    });
+    await sheet.present();
+  }, LONG_PRESS_MS);
+}
+
+function onContactTouchEnd() {
+  if (longPressTimer != null) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+}
+
 const handleContactClick = async (contact: ContactItem) => {
-  const me = getAuthUser();
+  if (justDidLongPress.value) {
+    justDidLongPress.value = false;
+    return;
+  }
+  const me = currentUser.value;
   if (!me) {
     const toast = await toastController.create({
-      message: t("auth.login"),
+      message: t("contacts.loginRequired"),
       duration: 2000,
       color: "warning",
     });
@@ -309,29 +523,10 @@ const handleContactClick = async (contact: ContactItem) => {
   gap: 2px;
 }
 
-.contact-detail {
-  font-size: 0.875rem;
-  color: var(--ion-color-medium);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.detail-icon {
-  font-size: 0.875rem;
-}
-
-.contact-last-seen,
 .contact-online {
   font-size: 0.75rem;
   color: var(--ion-color-medium);
   margin: 0;
-}
-
-.contact-online {
-  color: var(--ion-color-success);
-  font-weight: 500;
 }
 
 .empty-state-container {
@@ -343,6 +538,10 @@ const handleContactClick = async (contact: ContactItem) => {
   text-align: center;
   height: 100%;
   min-height: 400px;
+}
+
+.empty-state-container.search-empty {
+  min-height: 120px;
 }
 
 .empty-state-icon {
@@ -366,11 +565,10 @@ const handleContactClick = async (contact: ContactItem) => {
   max-width: 280px;
 }
 
-.empty-state-button {
-  margin-top: 16px;
-}
-
 .loading-container {
   padding: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>

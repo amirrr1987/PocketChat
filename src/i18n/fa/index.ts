@@ -107,9 +107,16 @@ export default {
     addContact: "افزودن مخاطب",
     noContacts: "مخاطبی وجود ندارد",
     searchPlaceholder: "جستجوی مخاطبین...",
-    emptyStateDescription: "برای افزودن مخاطب جدید، دکمه + را فشار دهید",
+    searchUsersPlaceholder: "جستجو با نام کاربری (حداقل ۲ حرف)",
+    emptyStateDescription: "با جستجوی نام کاربری بالا مخاطب اضافه کنید",
     lastSeen: "آخرین بازدید",
     errorLoading: "بارگذاری مخاطبین ناموفق بود",
+    addToContacts: "افزودن به مخاطبین",
+    removeFromContacts: "حذف از مخاطبین",
+    alreadyInContacts: "در مخاطبین",
+    searchMinChars: "حداقل ۲ کاراکتر وارد کنید",
+    noSearchResults: "کاربری یافت نشد",
+    loginRequired: "برای مشاهده مخاطبین وارد شوید",
   },
 
   // Chats
@@ -122,6 +129,16 @@ export default {
     emptyStateMessage: "هنوز چتی ندارید",
     emptyStateDescription: "برای شروع یک چت جدید، دکمه + را فشار دهید",
     errorLoading: "بارگذاری چت‌ها ناموفق بود",
+    deleteConfirm: "«{name}» حذف شود؟",
+    deleted: "چت حذف شد",
+  },
+
+  // PWA Update
+  pwa: {
+    updateAvailable: "نسخهٔ جدید آماده است. الان به‌روزرسانی شود؟",
+    updateNow: "به‌روزرسانی",
+    later: "بعداً",
+    offlineReady: "برنامه برای استفاده آفلاین آماده است",
   },
 
   // Profile

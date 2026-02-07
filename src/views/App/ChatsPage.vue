@@ -72,8 +72,13 @@
           <ion-item-sliding>
             <ion-item
               :button="true"
-              @click="navigateTo(`/chat/${chat.id}`)"
               class="chat-item"
+              @click="handleChatClick(chat)"
+              @contextmenu.prevent="onChatContextMenu(chat)"
+              @touchstart.passive="onChatTouchStart($event, chat)"
+              @touchend.passive="onChatTouchEnd"
+              @touchmove.passive="onChatTouchEnd"
+              @touchcancel.passive="onChatTouchEnd"
             >
               <ion-avatar aria-hidden="true" slot="start" class="chat-avatar">
                 <img alt="" :src="chat.avatar" />
@@ -154,6 +159,8 @@ import {
   IonBadge,
   IonSkeletonText,
   toastController,
+  actionSheetController,
+  alertController,
 } from "@ionic/vue";
 import {
   search,
@@ -165,7 +172,14 @@ import {
   people,
 } from "ionicons/icons";
 import { useI18n } from "vue-i18n";
-import { fetchChats, type GroupChat, type SingleChat, type ChatsResponse } from "@/api/chats";
+import {
+  fetchChats,
+  deleteGroup,
+  deleteSingle,
+  type GroupChat,
+  type SingleChat,
+  type ChatsResponse,
+} from "@/api/chats";
 import { getAuthUser } from "@/api/client";
 
 const { t } = useI18n();
@@ -175,9 +189,14 @@ interface ChatItem {
   id: string;
   name: string;
   avatar: string;
+  isGroup: boolean;
   sender?: { name: string; lastMessage: string; lastMessageTime: string };
   unreadCount: number;
 }
+
+const LONG_PRESS_MS = 500;
+let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+const justDidLongPress = ref(false);
 
 const isSearchOpen = ref(false);
 const searchQuery = ref("");
@@ -193,6 +212,7 @@ function toChatItem(g: GroupChat): ChatItem {
     id: g.id,
     name,
     avatar: `https://placehold.co/40x40/4285f4/ffffff?text=${encodeURIComponent(initial)}`,
+    isGroup: true,
     sender: { name: "", lastMessage: "", lastMessageTime: "" },
     unreadCount: 0,
   };
@@ -207,6 +227,7 @@ function toChatItemSingle(s: SingleChat): ChatItem {
     id: s.id,
     name,
     avatar: `https://placehold.co/40x40/ea4335/ffffff?text=${encodeURIComponent(initial)}`,
+    isGroup: false,
     sender: { name: "", lastMessage: "", lastMessageTime: "" },
     unreadCount: 0,
   };
@@ -233,6 +254,96 @@ onMounted(() => loadChats());
 const navigateTo = (path: string) => {
   router.push(path);
 };
+
+function handleChatClick(chat: ChatItem) {
+  if (justDidLongPress.value) {
+    justDidLongPress.value = false;
+    return;
+  }
+  navigateTo(`/chat/${chat.id}`);
+}
+
+async function onChatContextMenu(chat: ChatItem) {
+  const sheet = await actionSheetController.create({
+    header: chat.name,
+    buttons: [
+      { text: t("common.cancel"), role: "cancel" },
+      {
+        text: t("common.delete"),
+        role: "destructive",
+        handler: () => {
+          void handleDeleteChat(chat);
+        },
+      },
+    ],
+  });
+  await sheet.present();
+}
+
+function onChatTouchStart(_ev: TouchEvent, chat: ChatItem) {
+  longPressTimer = setTimeout(async () => {
+    longPressTimer = null;
+    justDidLongPress.value = true;
+    const sheet = await actionSheetController.create({
+      header: chat.name,
+      buttons: [
+        { text: t("common.cancel"), role: "cancel" },
+        {
+          text: t("common.delete"),
+          role: "destructive",
+          handler: () => {
+            void handleDeleteChat(chat);
+          },
+        },
+      ],
+    });
+    await sheet.present();
+  }, LONG_PRESS_MS);
+}
+
+function onChatTouchEnd() {
+  if (longPressTimer != null) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+}
+
+async function handleDeleteChat(chat: ChatItem) {
+  const alert = await alertController.create({
+    message: t("chats.deleteConfirm", { name: chat.name }),
+    buttons: [
+      { text: t("common.cancel"), role: "cancel" },
+      {
+        text: t("common.delete"),
+        role: "destructive",
+        handler: async () => {
+          try {
+            if (chat.isGroup) {
+              await deleteGroup(chat.id);
+            } else {
+              await deleteSingle(chat.id);
+            }
+            await loadChats();
+            const toast = await toastController.create({
+              message: t("chats.deleted"),
+              duration: 2000,
+              color: "success",
+            });
+            toast.present();
+          } catch (e: unknown) {
+            const toast = await toastController.create({
+              message: e instanceof Error ? e.message : String(e),
+              duration: 3000,
+              color: "danger",
+            });
+            toast.present();
+          }
+        },
+      },
+    ],
+  });
+  await alert.present();
+}
 
 const filteredChats = computed(() => {
   if (!searchQuery.value.trim()) return chats.value;

@@ -107,9 +107,16 @@ export default {
     addContact: "Add Contact",
     noContacts: "No contacts",
     searchPlaceholder: "Search contacts...",
-    emptyStateDescription: "Tap the + button to add a new contact",
+    searchUsersPlaceholder: "Search by username (min 2 chars)",
+    emptyStateDescription: "Search by username above to add contacts",
     lastSeen: "Last seen",
     errorLoading: "Failed to load contacts",
+    addToContacts: "Add to contacts",
+    removeFromContacts: "Remove",
+    alreadyInContacts: "In contacts",
+    searchMinChars: "Type at least 2 characters",
+    noSearchResults: "No users found",
+    loginRequired: "Please log in to see contacts",
   },
 
   // Chats
@@ -122,6 +129,16 @@ export default {
     emptyStateMessage: "No chats yet",
     emptyStateDescription: "Tap the + button to start a new chat",
     errorLoading: "Failed to load chats",
+    deleteConfirm: "Delete \"{name}\"?",
+    deleted: "Chat deleted",
+  },
+
+  // PWA Update
+  pwa: {
+    updateAvailable: "A new version is available. Update now?",
+    updateNow: "Update",
+    later: "Later",
+    offlineReady: "App ready to work offline",
   },
 
   // Profile
