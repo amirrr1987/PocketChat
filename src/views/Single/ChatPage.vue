@@ -33,8 +33,13 @@
           <ion-avatar class="message-avatar">
             <img :src="message.avatar" :alt="message.senderName" />
           </ion-avatar>
-          <div class="message-bubble message-bubble-incoming">
-            <div v-if="isGroupChat && message.senderName" class="message-sender-name">{{ message.senderName }}</div>
+          <div class="message-bubble message-bubble-incoming" @click="handleMessageClick(message)" @contextmenu.prevent="openMessageMenu(message)">
+            <div
+              v-if="isGroupChat && message.senderName"
+              class="message-sender-name"
+            >
+              {{ message.senderName }}
+            </div>
             <div v-if="message.replyTo" class="reply-indicator">
               <div class="reply-indicator-bar"></div>
               <div class="reply-indicator-content">
@@ -44,7 +49,40 @@
                 <p>{{ message.replyTo.text }}</p>
               </div>
             </div>
-            <div class="message-text">{{ message.text }}</div>
+            <div v-if="message.fileUrl" class="message-file">
+              <img
+                v-if="message.fileType === 'image'"
+                :src="message.thumbnailUrl || message.fileUrl"
+                :alt="message.text"
+                class="message-image"
+              />
+              <div v-else class="message-file-info">
+                <ion-icon :icon="document" class="file-icon"></ion-icon>
+                <span>{{ message.text }}</span>
+              </div>
+            </div>
+            <div v-else class="message-text">{{ message.text }}</div>
+            <div
+              v-if="message.reactions && message.reactions.size > 0"
+              class="message-reactions"
+            >
+              <span
+                v-for="[emoji, data] in message.reactions"
+                :key="emoji"
+                class="reaction-bubble"
+                @click="toggleReaction(message, emoji)"
+              >
+                {{ emoji }} {{ data.count }}
+              </span>
+              <button class="reaction-add-button" @click="openReactionPicker($event, message)">
+                +
+              </button>
+            </div>
+            <div v-else class="message-reactions">
+              <button class="reaction-add-button reaction-add-button-small" @click="openReactionPicker($event, message)">
+                +
+              </button>
+            </div>
             <div class="message-time">
               <ion-note>{{ message.time }}</ion-note>
             </div>
@@ -53,7 +91,7 @@
 
         <!-- پیام‌های خروجی (راست) -->
         <div v-else class="message-wrapper message-outgoing">
-          <div class="message-bubble message-bubble-outgoing">
+          <div class="message-bubble message-bubble-outgoing" @click="handleMessageClick(message)" @contextmenu.prevent="openMessageMenu(message)">
             <div
               v-if="message.replyTo"
               class="reply-indicator reply-indicator-outgoing"
@@ -66,17 +104,52 @@
                 <p>{{ message.replyTo.text }}</p>
               </div>
             </div>
-            <div class="message-text message-text-outgoing">
+            <div v-if="message.fileUrl" class="message-file">
+              <img
+                v-if="message.fileType === 'image'"
+                :src="message.thumbnailUrl || message.fileUrl"
+                :alt="message.text"
+                class="message-image"
+              />
+              <div v-else class="message-file-info">
+                <ion-icon :icon="document" class="file-icon"></ion-icon>
+                <span>{{ message.text }}</span>
+              </div>
+            </div>
+            <div v-else class="message-text message-text-outgoing">
               {{ message.text }}
+            </div>
+            <div
+              v-if="message.reactions && message.reactions.size > 0"
+              class="message-reactions"
+            >
+              <span
+                v-for="[emoji, data] in message.reactions"
+                :key="emoji"
+                class="reaction-bubble reaction-bubble-outgoing"
+                @click="toggleReaction(message, emoji)"
+              >
+                {{ emoji }} {{ data.count }}
+              </span>
+              <button class="reaction-add-button reaction-add-button-outgoing" @click="openReactionPicker($event, message)">
+                +
+              </button>
+            </div>
+            <div v-else class="message-reactions">
+              <button class="reaction-add-button reaction-add-button-small reaction-add-button-outgoing" @click="openReactionPicker($event, message)">
+                +
+              </button>
             </div>
             <div class="message-footer">
               <ion-note color="light" class="message-time-outgoing">{{
                 message.time
               }}</ion-note>
               <ion-icon
-                v-if="message.read"
+                v-if="
+                  message.read || (message.readBy && message.readBy.length > 0)
+                "
                 :icon="checkmarkDone"
-                class="read-status-icon"
+                class="read-status-icon read-status-read"
               ></ion-icon>
               <ion-icon
                 v-else
@@ -88,11 +161,44 @@
         </div>
       </template>
     </div>
+    <MessageReactionPicker
+      :is-open="showReactionPicker"
+      :trigger-event="reactionPickerEvent"
+      @dismiss="showReactionPicker = false"
+      @select="handleReactionSelect"
+      @showMore="handleShowMoreEmojis"
+    />
+    <EmojiPicker
+      :is-open="showFullEmojiPicker"
+      @dismiss="showFullEmojiPicker = false"
+      @select="handleFullEmojiSelect"
+    />
+    <MessageMenu
+      :is-open="showMessageMenu"
+      :header="selectedMessage?.senderName"
+      :options="messageMenuOptions"
+      @dismiss="showMessageMenu = false"
+      @reply="handleReply"
+      @edit="handleEdit"
+      @delete="handleDelete"
+      @copy="handleCopy"
+      @forward="handleForward"
+      @react="handleReactFromMenu"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, inject, nextTick, type Ref } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  watch,
+  inject,
+  nextTick,
+  type Ref,
+} from "vue";
 import { useRoute } from "vue-router";
 import {
   IonAvatar,
@@ -102,16 +208,27 @@ import {
   IonSpinner,
   IonButton,
 } from "@ionic/vue";
-import { checkmark, checkmarkDone, warningOutline, chatbubbleOutline } from "ionicons/icons";
+import {
+  checkmark,
+  checkmarkDone,
+  warningOutline,
+  chatbubbleOutline,
+  document,
+} from "ionicons/icons";
 import { useI18n } from "vue-i18n";
 import { fetchChatById, type GroupChat, type SingleChat } from "@/api/chats";
 import {
   fetchMessagesBySingleChat,
   fetchMessagesByGroup,
-  createMessage,
+  uploadFile,
   type Message,
 } from "@/api/messages";
 import { getAuthUser, type ApiError } from "@/api/client";
+import { useChatSocket } from "@/composables/useChatSocket";
+import MessageReactionPicker from "@/components/MessageReactionPicker.vue";
+import EmojiPicker from "@/components/EmojiPicker.vue";
+import MessageMenu from "@/components/MessageMenu.vue";
+import type { MessageMenuOptions } from "@/components/MessageMenu.vue";
 
 interface DisplayMessage {
   id: string;
@@ -122,6 +239,11 @@ interface DisplayMessage {
   senderName: string;
   avatar: string;
   replyTo?: { senderName: string; text: string };
+  reactions?: Map<string, { count: number; userIds: string[] }>;
+  readBy?: string[];
+  fileUrl?: string | null;
+  fileType?: string | null;
+  thumbnailUrl?: string | null;
 }
 
 const { t } = useI18n();
@@ -135,7 +257,68 @@ const loadError = ref("");
 const chatMeta = ref<{ singleChatId?: string; groupId?: string } | null>(null);
 const scrollToBottom = inject<(() => void) | null>("chatScrollToBottom", null);
 
+const chatSocket = useChatSocket();
+const joinedRoom = ref<{ singleChatId?: string; groupId?: string } | null>(null);
+const typingUsers = ref<Set<string>>(new Set());
+
+// Reaction UI
+const showReactionPicker = ref(false);
+const reactionPickerEvent = ref<Event | undefined>();
+const selectedMessageForReaction = ref<DisplayMessage | null>(null);
+const showFullEmojiPicker = ref(false);
+
+// Message Menu
+const showMessageMenu = ref(false);
+const selectedMessage = ref<DisplayMessage | null>(null);
+const messageMenuOptions = computed<MessageMenuOptions>(() => ({
+  canEdit: selectedMessage.value?.isOutgoing ?? false,
+  canDelete: selectedMessage.value?.isOutgoing ?? false,
+  canReply: true,
+  canForward: true,
+  canCopy: !!selectedMessage.value?.text,
+  canReact: true,
+}));
+
 const isGroupChat = computed(() => !!chatMeta.value?.groupId);
+const typingText = computed(() => {
+  if (typingUsers.value.size === 0) return "";
+  const users = Array.from(typingUsers.value);
+  if (users.length === 1) {
+    return `${users[0]} ${t("chat.isTyping")}`;
+  }
+  if (users.length === 2) {
+    return `${users[0]} ${t("chat.and")} ${users[1]} ${t("chat.areTyping")}`;
+  }
+  return `${users.length} ${t("chat.peopleAreTyping")}`;
+});
+
+// Message handlers (defined early for template usage)
+function openReactionPicker(event: Event, message: DisplayMessage) {
+  event.stopPropagation();
+  selectedMessageForReaction.value = message;
+  reactionPickerEvent.value = event;
+  showReactionPicker.value = true;
+}
+
+function toggleReaction(message: DisplayMessage, emoji: string) {
+  if (!chatMeta.value || !currentUser) return;
+  const reactionData = message.reactions?.get(emoji);
+  const hasReacted = reactionData?.userIds.includes(currentUser.id);
+  if (hasReacted) {
+    chatSocket.unreactToMessage(message.id, emoji, chatMeta.value);
+  } else {
+    chatSocket.reactToMessage(message.id, emoji, chatMeta.value);
+  }
+}
+
+function handleMessageClick() {
+  // For now, do nothing on single click
+}
+
+function openMessageMenu(message: DisplayMessage) {
+  selectedMessage.value = message;
+  showMessageMenu.value = true;
+}
 
 function formatTime(dateStr: string): string {
   try {
@@ -143,9 +326,17 @@ function formatTime(dateStr: string): string {
     const now = new Date();
     const isToday = d.toDateString() === now.toDateString();
     if (isToday) {
-      return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+      return d.toLocaleTimeString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     }
-    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   } catch {
     return "";
   }
@@ -159,9 +350,14 @@ function toDisplayMessage(m: Message): DisplayMessage {
     isOutgoing: m.senderId === currentUser?.id,
     text: m.content,
     time: formatTime(m.createdAt),
-    read: true,
+    read: false,
     senderName,
     avatar: `https://placehold.co/40x40/ea4335/ffffff?text=${encodeURIComponent(initial)}`,
+    reactions: new Map(),
+    readBy: [],
+    fileUrl: m.fileUrl,
+    fileType: m.fileType,
+    thumbnailUrl: m.thumbnailUrl,
   };
 }
 
@@ -172,6 +368,10 @@ async function loadChatAndMessages() {
   loadError.value = "";
   messages.value = [];
   chatMeta.value = null;
+  if (joinedRoom.value) {
+    chatSocket.leaveChat(joinedRoom.value);
+    joinedRoom.value = null;
+  }
   try {
     const chat = await fetchChatById(id);
     if ("title" in chat) {
@@ -186,11 +386,100 @@ async function loadChatAndMessages() {
       messages.value = list.map(toDisplayMessage);
     }
     await nextTick();
-    scrollToBottom?.();
+    setTimeout(() => scrollToBottom?.(), 150);
+
+    if (chatMeta.value && currentUser) {
+      // Mark chat as read when opened
+      chatSocket.markChatAsRead(chatMeta.value);
+      
+      chatSocket.connect({
+        onMessageNew(msg: Message) {
+          messages.value = [...messages.value, toDisplayMessage(msg)];
+          nextTick().then(() => {
+            setTimeout(() => scrollToBottom?.(), 100);
+          });
+          // Auto mark as read if we're in the chat
+          if (chatMeta.value && msg.senderId !== currentUser?.id) {
+            setTimeout(() => {
+              chatSocket.markMessageAsRead(msg.id, chatMeta.value!);
+            }, 1000);
+          }
+        },
+        onMessageEdited(msg: Message) {
+          const idx = messages.value.findIndex((m) => m.id === msg.id);
+          if (idx !== -1) {
+            const next = [...messages.value];
+            next[idx] = toDisplayMessage(msg);
+            messages.value = next;
+          }
+        },
+        onMessageDeleted(payload: { messageId: string }) {
+          messages.value = messages.value.filter(
+            (m) => m.id !== payload.messageId
+          );
+        },
+        onMessageReadBy(payload) {
+          const msg = messages.value.find((m) => m.id === payload.messageId);
+          if (msg && !msg.readBy?.includes(payload.userId)) {
+            msg.readBy = [...(msg.readBy || []), payload.userId];
+            if (msg.isOutgoing) {
+              msg.read = true;
+            }
+          }
+        },
+        onMessageReactionAdded(payload) {
+          const msg = messages.value.find((m) => m.id === payload.messageId);
+          if (msg) {
+            if (!msg.reactions) msg.reactions = new Map();
+            const existing = msg.reactions.get(payload.emoji);
+            if (existing) {
+              existing.userIds.push(payload.userId);
+              existing.count = existing.userIds.length;
+            } else {
+              msg.reactions.set(payload.emoji, {
+                count: 1,
+                userIds: [payload.userId],
+              });
+            }
+          }
+        },
+        onMessageReactionRemoved(payload) {
+          const msg = messages.value.find((m) => m.id === payload.messageId);
+          if (msg?.reactions) {
+            const existing = msg.reactions.get(payload.emoji);
+            if (existing) {
+              existing.userIds = existing.userIds.filter(
+                (id) => id !== payload.userId
+              );
+              existing.count = existing.userIds.length;
+              if (existing.count === 0) {
+                msg.reactions.delete(payload.emoji);
+              }
+            }
+          }
+        },
+        onTypingStart(payload: { userId: string; username: string }) {
+          if (payload.userId !== currentUser?.id) {
+            typingUsers.value.add(payload.username);
+          }
+        },
+        onTypingStop() {
+          typingUsers.value.clear();
+        },
+        onError(payload: { message: string }) {
+          loadError.value = payload.message;
+        },
+      });
+      chatSocket.joinChat(chatMeta.value);
+      joinedRoom.value = { ...chatMeta.value };
+    }
   } catch (e) {
     console.error("ChatPage: load chat/messages failed", e);
     const msg =
-      e && typeof e === "object" && "message" in e && typeof (e as ApiError).message === "string"
+      e &&
+      typeof e === "object" &&
+      "message" in e &&
+      typeof (e as ApiError).message === "string"
         ? (e as ApiError).message
         : t("chat.loadError");
     loadError.value = msg;
@@ -200,47 +489,151 @@ async function loadChatAndMessages() {
   }
 }
 
-
 onMounted(loadChatAndMessages);
 watch(() => route.params.id, loadChatAndMessages);
 
-const sendHandlerRef = inject<Ref<((text: string) => void) | null> | null>("chatSendHandler", null);
+const sendHandlerRef = inject<Ref<((text: string) => void) | null> | null>(
+  "chatSendHandler",
+  null
+);
+
+const fileHandlerRef = inject<Ref<((file: File) => void) | null> | null>(
+  "chatFileHandler",
+  null
+);
+
+const typingSenderRef = inject<Ref<((isTypingNow: boolean) => void) | null> | null>(
+  "chatTypingSender",
+  null
+);
+
+const replyToRef = inject<Ref<{ id: string; text: string; senderName: string } | null>>(
+  "chatReplyTo",
+  ref<{ id: string; text: string; senderName: string } | null>(null)
+);
+
+const editingRef = inject<Ref<{ id: string; text: string } | null>>(
+  "chatEditing",
+  ref<{ id: string; text: string } | null>(null)
+);
 
 onMounted(() => {
-  if (!sendHandlerRef) return;
-  sendHandlerRef.value = async (text: string) => {
-    if (!currentUser || !chatMeta.value) return;
-    try {
-      const payload = {
-        senderId: currentUser.id,
-        content: text,
-        ...(chatMeta.value.singleChatId
-          ? { singleChatId: chatMeta.value.singleChatId }
-          : { groupId: chatMeta.value.groupId }),
-      };
-      const created = await createMessage(payload);
-      messages.value = [...messages.value, toDisplayMessage(created)];
-      await nextTick();
-      scrollToBottom?.();
-    } catch (e) {
-      console.error("Send message failed:", e);
-    }
-  };
+  if (sendHandlerRef) {
+    sendHandlerRef.value = (text: string) => {
+      if (!currentUser || !chatMeta.value) return;
+      
+      // Check if editing
+      const editing = editingRef.value;
+      if (editing) {
+        chatSocket.editMessage(editing.id, text, chatMeta.value);
+        editingRef.value = null;
+        return;
+      }
+      
+      // Send new message
+      const parentId = replyToRef.value?.id;
+      chatSocket.sendMessage(text, {
+        singleChatId: chatMeta.value.singleChatId,
+        groupId: chatMeta.value.groupId,
+        parentMessageId: parentId,
+      });
+      replyToRef.value = null;
+    };
+  }
+  if (fileHandlerRef) {
+    fileHandlerRef.value = async (file: File) => {
+      if (!currentUser || !chatMeta.value) return;
+      try {
+        await uploadFile(file, {
+          singleChatId: chatMeta.value.singleChatId,
+          groupId: chatMeta.value.groupId,
+        });
+      } catch (e) {
+        console.error("File upload failed:", e);
+        loadError.value = e instanceof Error ? e.message : "Upload failed";
+      }
+    };
+  }
 });
+
+onBeforeUnmount(() => {
+  if (joinedRoom.value) {
+    chatSocket.leaveChat(joinedRoom.value);
+    joinedRoom.value = null;
+  }
+});
+
+function handleReactionSelect(emoji: string) {
+  if (!selectedMessageForReaction.value || !chatMeta.value) return;
+  const message = selectedMessageForReaction.value;
+  chatSocket.reactToMessage(message.id, emoji, chatMeta.value);
+}
+
+function handleShowMoreEmojis() {
+  showFullEmojiPicker.value = true;
+}
+
+function handleFullEmojiSelect(emoji: string) {
+  if (!selectedMessageForReaction.value || !chatMeta.value) return;
+  const message = selectedMessageForReaction.value;
+  chatSocket.reactToMessage(message.id, emoji, chatMeta.value);
+}
+
+function handleReply() {
+  const msg = selectedMessage.value;
+  if (!msg) return;
+  replyToRef.value = {
+    id: msg.id,
+    text: msg.text,
+    senderName: msg.senderName,
+  };
+}
+
+function handleEdit() {
+  const msg = selectedMessage.value;
+  if (!msg) return;
+  editingRef.value = {
+    id: msg.id,
+    text: msg.text,
+  };
+}
+
+function handleDelete() {
+  if (!selectedMessage.value || !chatMeta.value) return;
+  chatSocket.deleteMessage(selectedMessage.value.id, chatMeta.value);
+}
+
+function handleCopy() {
+  if (!selectedMessage.value) return;
+  navigator.clipboard.writeText(selectedMessage.value.text);
+}
+
+function handleForward() {
+  console.log("Forward message:", selectedMessage.value);
+  // Future implementation
+}
+
+function handleReactFromMenu() {
+  if (!selectedMessage.value) return;
+  selectedMessageForReaction.value = selectedMessage.value;
+  showFullEmojiPicker.value = true;
+}
 </script>
 
 <style scoped>
 .chat-page {
-  min-height: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 .messages-container {
-  padding: 16px 12px 80px;
+  min-height: 100vh;
+  padding: 16px 12px 120px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  justify-content: flex-end;
 }
 
 .state-container {
@@ -306,8 +699,12 @@ onMounted(() => {
   border-radius: 18px;
   position: relative;
   word-wrap: break-word;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-  transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.1s ease-out;
 }
 
 .message-bubble-incoming {
@@ -363,6 +760,143 @@ onMounted(() => {
   font-size: 16px;
   color: var(--ion-color-primary-contrast);
   opacity: 0.9;
+}
+
+.read-status-read {
+  color: #4fc3f7;
+}
+
+.message-reactions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.reaction-bubble {
+  background: rgba(0, 0, 0, 0.08);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.reaction-bubble:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.reaction-bubble-outgoing {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.reaction-bubble-outgoing:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.message-file {
+  margin-bottom: 4px;
+}
+
+.message-image {
+  max-width: 250px;
+  max-height: 300px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.message-file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+}
+
+.file-icon {
+  font-size: 24px;
+  color: var(--ion-color-primary);
+}
+
+.reaction-add-button {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 0.875rem;
+  color: var(--ion-color-medium);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reaction-add-button:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.reaction-add-button-small {
+  opacity: 0.5;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+}
+
+.reaction-add-button-outgoing {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--ion-color-primary-contrast);
+}
+
+.reaction-add-button-outgoing:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.typing-indicator {
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ion-color-medium);
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+.typing-text {
+  flex-shrink: 0;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.typing-dots span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ion-color-medium);
+  animation: typing 1.4s infinite;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  30% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
 }
 
 /* Reply Indicator */
@@ -453,9 +987,10 @@ onMounted(() => {
 
 .message-bubble:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.06);
 }
-
 
 /* RTL Support */
 [dir="rtl"] .message-incoming {

@@ -181,9 +181,12 @@ import {
   type ChatsResponse,
 } from "@/api/chats";
 import { getAuthUser } from "@/api/client";
+import { useChatSocket } from "@/composables/useChatSocket";
+import type { Message } from "@/api/messages";
 
 const { t } = useI18n();
 const router = useRouter();
+const chatSocket = useChatSocket();
 
 interface ChatItem {
   id: string;
@@ -192,6 +195,7 @@ interface ChatItem {
   isGroup: boolean;
   sender?: { name: string; lastMessage: string; lastMessageTime: string };
   unreadCount: number;
+  lastMessageAt?: string | null;
 }
 
 const LONG_PRESS_MS = 500;
@@ -213,8 +217,9 @@ function toChatItem(g: GroupChat): ChatItem {
     name,
     avatar: `https://placehold.co/40x40/4285f4/ffffff?text=${encodeURIComponent(initial)}`,
     isGroup: true,
-    sender: { name: "", lastMessage: "", lastMessageTime: "" },
+    sender: { name: "", lastMessage: "", lastMessageTime: g.lastMessageAt || "" },
     unreadCount: 0,
+    lastMessageAt: g.lastMessageAt,
   };
 }
 
@@ -228,8 +233,9 @@ function toChatItemSingle(s: SingleChat): ChatItem {
     name,
     avatar: `https://placehold.co/40x40/ea4335/ffffff?text=${encodeURIComponent(initial)}`,
     isGroup: false,
-    sender: { name: "", lastMessage: "", lastMessageTime: "" },
+    sender: { name: "", lastMessage: "", lastMessageTime: s.lastMessageAt || "" },
     unreadCount: 0,
+    lastMessageAt: s.lastMessageAt,
   };
 }
 
@@ -240,7 +246,11 @@ async function loadChats() {
     const res: ChatsResponse = await fetchChats();
     const groupItems = (res.groups ?? []).map(toChatItem);
     const singleItems = (res.singleChats ?? []).map(toChatItemSingle);
-    chats.value = [...groupItems, ...singleItems];
+    chats.value = [...groupItems, ...singleItems].sort((a, b) => {
+      const aTime = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+      const bTime = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+      return bTime - aTime;
+    });
   } catch (e: unknown) {
     loadError.value = e instanceof Error ? e.message : String(e);
     chats.value = [];
@@ -249,7 +259,33 @@ async function loadChats() {
   }
 }
 
-onMounted(() => loadChats());
+onMounted(() => {
+  loadChats();
+  chatSocket.connect({
+    onChatUpdated(payload) {
+      const chat = chats.value.find(
+        (c) =>
+          c.id === payload.chatId &&
+          ((payload.chatType === "group" && c.isGroup) ||
+            (payload.chatType === "single" && !c.isGroup))
+      );
+      if (chat) {
+        chat.sender = {
+          name: payload.lastMessage.sender?.username || "",
+          lastMessage: payload.lastMessage.content,
+          lastMessageTime: payload.lastMessage.createdAt,
+        };
+        chat.lastMessageAt = payload.lastMessage.createdAt;
+        chat.unreadCount = (chat.unreadCount || 0) + 1;
+        chats.value = [...chats.value].sort((a, b) => {
+          const aTime = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+          const bTime = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+          return bTime - aTime;
+        });
+      }
+    },
+  });
+});
 
 const navigateTo = (path: string) => {
   router.push(path);
