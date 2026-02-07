@@ -7,52 +7,50 @@
         </ion-toolbar>
       </ion-header>
       <ion-content>
-        <!-- User Profile Section -->
-        <div class="menu-profile">
-          <ion-avatar class="menu-avatar" @click="navigateTo('/app/profile')">
+        <div class="menu-profile" @click="navigateTo('/app/profile')">
+          <ion-avatar class="menu-avatar">
             <img :src="userProfile.avatar" :alt="userProfile.name" />
           </ion-avatar>
-          <div class="menu-user-info" @click="navigateTo('/app/profile')">
+          <div class="menu-user-info">
             <h3 class="menu-user-name">{{ userProfile.name }}</h3>
             <p class="menu-user-status">{{ userProfile.status }}</p>
           </div>
         </div>
 
         <ion-list class="menu-list">
-          <ion-item button @click="navigateTo('/')" class="menu-item">
-            <ion-icon :icon="chatbox" slot="start" color="primary"></ion-icon>
-            <ion-label>{{ t("nav.chats") }}</ion-label>
-          </ion-item>
-          <ion-item button @click="navigateTo('/contacts')" class="menu-item">
-            <ion-icon :icon="people" slot="start" color="primary"></ion-icon>
-            <ion-label>{{ t("nav.contacts") }}</ion-label>
-          </ion-item>
-          <ion-item
-            button
-            @click="navigateTo('/app/settings')"
-            class="menu-item"
-          >
-            <ion-icon :icon="settings" slot="start" color="primary"></ion-icon>
-            <ion-label>{{ t("nav.settings") }}</ion-label>
-          </ion-item>
-
-          <ion-item-divider>
-            <ion-label>{{ t("nav.account") }}</ion-label>
-          </ion-item-divider>
-
-          <ion-item
-            button
-            @click="navigateTo('/app/profile')"
-            class="menu-item"
-          >
-            <ion-icon :icon="person" slot="start" color="primary"></ion-icon>
-            <ion-label>{{ t("nav.profile") }}</ion-label>
-          </ion-item>
-
-          <ion-item button @click="logout" class="menu-item menu-item-logout">
-            <ion-icon :icon="logOut" slot="start" color="danger"></ion-icon>
-            <ion-label>{{ t("nav.logout") }}</ion-label>
-          </ion-item>
+          <template v-for="(item, idx) in appMenuItems" :key="idx">
+            <ion-item-divider v-if="item.type === 'divider'">
+              <ion-label>{{ item.labelKey ? t(item.labelKey) : '' }}</ion-label>
+            </ion-item-divider>
+            <ion-item
+              v-else-if="item.type === 'logout'"
+              button
+              @click="logout"
+              class="menu-item menu-item-logout"
+            >
+              <ion-icon
+                v-if="item.icon"
+                :icon="item.icon"
+                slot="start"
+                color="danger"
+              />
+              <ion-label>{{ item.labelKey ? t(item.labelKey) : '' }}</ion-label>
+            </ion-item>
+            <ion-item
+              v-else-if="item.type === 'link' && item.path"
+              button
+              @click="navigateTo(item.path!)"
+              class="menu-item"
+            >
+              <ion-icon
+                v-if="item.icon"
+                :icon="item.icon"
+                slot="start"
+                color="primary"
+              />
+              <ion-label>{{ item.labelKey ? t(item.labelKey) : '' }}</ion-label>
+            </ion-item>
+          </template>
         </ion-list>
       </ion-content>
     </ion-menu>
@@ -78,18 +76,24 @@ import {
   IonLabel,
   menuController,
 } from "@ionic/vue";
-import { people, chatbox, settings, logOut, person } from "ionicons/icons";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { ref } from "vue";
+import { computed } from "vue";
+import { appMenuItems } from "@/config/appNav";
+import { getAuthUser } from "@/api/client";
 
 const { t } = useI18n();
 const router = useRouter();
 
-const userProfile = ref({
-  name: "John Doe",
-  status: "Available",
-  avatar: "https://placehold.co/80x80/4285f4/ffffff?text=JD",
+const userProfile = computed(() => {
+  const user = getAuthUser();
+  const name = user?.username ?? "";
+  const initial = name.slice(0, 2).toUpperCase() || "?";
+  return {
+    name: name || "—",
+    status: user ? t("nav.available") : "—",
+    avatar: `https://placehold.co/80x80/4285f4/ffffff?text=${encodeURIComponent(initial)}`,
+  };
 });
 
 const navigateTo = async (path: string) => {

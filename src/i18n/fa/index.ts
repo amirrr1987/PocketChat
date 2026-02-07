@@ -25,6 +25,7 @@ export default {
     menu: "منو",
     account: "حساب کاربری",
     profile: "پروفایل",
+    available: "آنلاین",
   },
 
   // Settings

@@ -41,7 +41,7 @@
             label-placement="stacked"
             :label="t('auth.password')"
             :placeholder="t('auth.enterPassword')"
-            type="password"
+            :type="showPassword ? 'text' : 'password'"
             @blur="validatePassword"
           >
             <ion-icon
@@ -52,11 +52,13 @@
             <ion-button
               fill="clear"
               slot="end"
+              type="button"
               :aria-label="t('auth.showHidePassword')"
+              @click.prevent="showPassword = !showPassword"
             >
               <ion-icon
                 slot="icon-only"
-                :icon="eye"
+                :icon="showPassword ? eyeOff : eye"
                 aria-hidden="true"
               ></ion-icon>
             </ion-button>
@@ -76,7 +78,7 @@
             label-placement="stacked"
             :label="t('auth.confirmPassword')"
             :placeholder="t('auth.enterConfirmPassword')"
-            type="password"
+            :type="showConfirmPassword ? 'text' : 'password'"
             @blur="validateConfirmPassword"
           >
             <ion-icon
@@ -87,11 +89,13 @@
             <ion-button
               fill="clear"
               slot="end"
+              type="button"
               :aria-label="t('auth.showHidePassword')"
+              @click.prevent="showConfirmPassword = !showConfirmPassword"
             >
               <ion-icon
                 slot="icon-only"
-                :icon="eye"
+                :icon="showConfirmPassword ? eyeOff : eye"
                 aria-hidden="true"
               ></ion-icon>
             </ion-button>
@@ -150,9 +154,11 @@ import {
   IonSpinner,
   toastController,
 } from "@ionic/vue";
-import { person, lockClosed, eye } from "ionicons/icons";
+import { person, lockClosed, eye, eyeOff } from "ionicons/icons";
 
 const router = useRouter();
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
 const { t } = useI18n();
 
 const username = ref("");

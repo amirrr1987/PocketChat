@@ -25,6 +25,7 @@ export default {
     menu: "Menu",
     account: "Account",
     profile: "Profile",
+    available: "Available",
   },
 
   // Settings

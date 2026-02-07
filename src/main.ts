@@ -46,15 +46,15 @@ app.use(IonicVue);
 app.use(router);
 
 app.use(i18n);
-Sentry.init({
-  app,
-  dsn: "https://examplePublicKey@o0.ingest.sentry.io/0",
-  // Adds request headers and IP for users, for more info visit:
-  // https://docs.sentry.io/platforms/javascript/guides/vue/configuration/options/#sendDefaultPii
-  sendDefaultPii: true,
-  integrations: (integrations) =>
-    integrations.filter((integration) => integration.name !== "Vue"),
-});
+// Sentry.init({
+//   app,
+//   dsn: "https://examplePublicKey@o0.ingest.sentry.io/0",
+//   // Adds request headers and IP for users, for more info visit:
+//   // https://docs.sentry.io/platforms/javascript/guides/vue/configuration/options/#sendDefaultPii
+//   sendDefaultPii: true,
+//   integrations: (integrations) =>
+//     integrations.filter((integration) => integration.name !== "Vue"),
+// });
 router.isReady().then(() => {
   app.mount("#app");
 });
