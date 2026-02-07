@@ -29,12 +29,12 @@
       <div class="settings-header">
         <ion-avatar class="settings-avatar">
           <img
-            src="https://placehold.co/80x80/4285f4/ffffff?text=JD"
-            alt="User"
+            :src="userAvatar"
+            :alt="userName"
           />
         </ion-avatar>
-        <h3 class="settings-user-name">John Doe</h3>
-        <p class="settings-user-email">john.doe@example.com</p>
+        <h3 class="settings-user-name">{{ userName }}</h3>
+        <p class="settings-user-email">{{ userEmail }}</p>
       </div>
 
       <ion-list>

@@ -83,6 +83,7 @@
               <ion-icon :icon="happy"></ion-icon>
             </ion-button>
             <ion-input
+              ref="messageInputRef"
               v-model="messageText"
               :placeholder="t('chat.typeMessage')"
               class="message-input"
@@ -219,7 +220,7 @@ async function loadChat() {
       const initial = (other?.username ?? "?").slice(0, 2).toUpperCase();
       contactAvatar.value = `https://placehold.co/40x40/ea4335/ffffff?text=${encodeURIComponent(initial)}`;
     }
-
+    
     // Check online status for single chats
     if (otherUserId) {
       chatSocket.connect({
@@ -239,6 +240,14 @@ async function loadChat() {
       });
       chatSocket.getOnlineUsers([otherUserId]);
     }
+    
+    // Focus on input after loading
+    setTimeout(() => {
+      const input = messageInputRef.value;
+      if (input && typeof (input as any).setFocus === "function") {
+        (input as any).setFocus();
+      }
+    }, 500);
   } catch {
     contactName.value = t("chat.loadError");
   } finally {
@@ -253,10 +262,11 @@ const messageText = ref("");
 const sendHandlerRef = ref<((text: string) => void) | null>(null);
 provide("chatSendHandler", sendHandlerRef);
 
-const fileHandlerRef = ref<((file: File) => void) | null>(null);
+const fileHandlerRef = ref<((file: File, caption?: string) => void) | null>(null);
 provide("chatFileHandler", fileHandlerRef);
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
+const messageInputRef = ref<HTMLInputElement | null>(null);
 
 function handleAttachClick() {
   fileInputRef.value?.click();
@@ -272,9 +282,9 @@ function handleFileSelected(event: Event) {
   }
 }
 
-function handleFileSend() {
+function handleFileSend(caption: string) {
   if (selectedFile.value && fileHandlerRef.value) {
-    fileHandlerRef.value(selectedFile.value);
+    fileHandlerRef.value(selectedFile.value, caption);
     selectedFile.value = null;
   }
 }

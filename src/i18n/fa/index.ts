@@ -174,5 +174,8 @@ export default {
     editProfile: "ویرایش پروفایل",
     changeAvatar: "تغییر تصویر پروفایل",
     privacySettings: "تنظیمات حریم خصوصی",
+    noEmail: "ایمیل تنظیم نشده",
+    noPhone: "تلفن تنظیم نشده",
+    defaultStatus: "سلام! من از آرازچت استفاده می‌کنم.",
   },
 };

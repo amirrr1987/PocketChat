@@ -7,8 +7,8 @@
         </ion-buttons>
         <ion-title>{{ t("profile.title") }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="handleEdit">
-            <ion-icon :icon="create"></ion-icon>
+          <ion-button @click="handleBack">
+            <ion-icon :icon="arrowBack"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -111,6 +111,7 @@ import {
   chevronForward,
   camera,
   lockClosed,
+  arrowBack
 } from "ionicons/icons";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -129,8 +130,8 @@ const userProfile = ref({
   bio: "Software developer and tech enthusiast",
 });
 
-const handleEdit = () => {
-  handleEditProfile();
+const handleBack = () => {
+  router.back();
 };
 
 const handleEditProfile = () => {

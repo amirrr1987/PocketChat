@@ -174,5 +174,8 @@ export default {
     editProfile: "Edit Profile",
     changeAvatar: "Change Avatar",
     privacySettings: "Privacy Settings",
+    noEmail: "No email set",
+    noPhone: "No phone set",
+    defaultStatus: "Hey there! I am using ArazChat.",
   },
 };

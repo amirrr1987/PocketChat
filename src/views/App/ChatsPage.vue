@@ -182,6 +182,7 @@ import {
 } from "@/api/chats";
 import { getAuthUser } from "@/api/client";
 import { useChatSocket } from "@/composables/useChatSocket";
+import { getAllChatStates, type ChatUserState } from "@/api/chat-state";
 import type { Message } from "@/api/messages";
 
 const { t } = useI18n();
@@ -243,9 +244,32 @@ async function loadChats() {
   isLoading.value = true;
   loadError.value = "";
   try {
-    const res: ChatsResponse = await fetchChats();
-    const groupItems = (res.groups ?? []).map(toChatItem);
-    const singleItems = (res.singleChats ?? []).map(toChatItemSingle);
+    const [res, chatStates] = await Promise.all([
+      fetchChats(),
+      getAllChatStates().catch(() => [] as ChatUserState[]),
+    ]);
+    
+    const stateMap = new Map<string, ChatUserState>();
+    chatStates.forEach(state => stateMap.set(state.chatId, state));
+    
+    const groupItems = (res.groups ?? []).map(g => {
+      const item = toChatItem(g);
+      const state = stateMap.get(g.id);
+      if (state) {
+        item.unreadCount = state.unreadCount;
+      }
+      return item;
+    });
+    
+    const singleItems = (res.singleChats ?? []).map(s => {
+      const item = toChatItemSingle(s);
+      const state = stateMap.get(s.id);
+      if (state) {
+        item.unreadCount = state.unreadCount;
+      }
+      return item;
+    });
+    
     chats.value = [...groupItems, ...singleItems].sort((a, b) => {
       const aTime = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
       const bTime = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;

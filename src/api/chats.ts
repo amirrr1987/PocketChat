@@ -10,6 +10,8 @@ export interface GroupChat {
   title: string;
   ownerId: string;
   owner?: UserRef;
+  lastMessageId?: string | null;
+  lastMessageAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,6 +22,8 @@ export interface SingleChat {
   user2Id: string;
   user1?: UserRef;
   user2?: UserRef;
+  lastMessageId?: string | null;
+  lastMessageAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

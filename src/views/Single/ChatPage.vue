@@ -55,13 +55,22 @@
                 :src="message.thumbnailUrl || message.fileUrl"
                 :alt="message.text"
                 class="message-image"
+                @click="openImageViewer(message.fileUrl)"
               />
+              <video
+                v-else-if="message.fileType === 'video'"
+                :src="message.fileUrl"
+                class="message-video"
+                controls
+                preload="metadata"
+              ></video>
               <div v-else class="message-file-info">
                 <ion-icon :icon="document" class="file-icon"></ion-icon>
                 <span>{{ message.text }}</span>
               </div>
             </div>
-            <div v-else class="message-text">{{ message.text }}</div>
+            <div v-if="message.text && message.fileUrl" class="message-caption">{{ message.text }}</div>
+            <div v-else-if="!message.fileUrl" class="message-text">{{ message.text }}</div>
             <div
               v-if="message.reactions && message.reactions.size > 0"
               class="message-reactions"
@@ -524,7 +533,7 @@ const sendHandlerRef = inject<Ref<((text: string) => void) | null> | null>(
   null
 );
 
-const fileHandlerRef = inject<Ref<((file: File) => void) | null> | null>(
+const fileHandlerRef = inject<Ref<((file: File, caption?: string) => void) | null> | null>(
   "chatFileHandler",
   null
 );
@@ -563,12 +572,13 @@ onMounted(() => {
     };
   }
   if (fileHandlerRef) {
-    fileHandlerRef.value = async (file: File) => {
+    fileHandlerRef.value = async (file: File, caption?: string) => {
       if (!currentUser || !chatMeta.value) return;
       try {
         await uploadFile(file, {
           singleChatId: chatMeta.value.singleChatId,
           groupId: chatMeta.value.groupId,
+          caption: caption?.trim(),
         });
       } catch (e) {
         console.error("File upload failed:", e);
@@ -639,6 +649,12 @@ function handleReactFromMenu() {
   if (!selectedMessage.value) return;
   selectedMessageForReaction.value = selectedMessage.value;
   showFullEmojiPicker.value = true;
+}
+
+function openImageViewer(imageUrl: string | null | undefined) {
+  if (!imageUrl) return;
+  // Open in new tab or use a modal viewer
+  window.open(imageUrl, '_blank');
 }
 </script>
 
@@ -825,24 +841,71 @@ function handleReactFromMenu() {
 }
 
 .message-image {
-  max-width: 250px;
-  max-height: 300px;
-  border-radius: 8px;
+  max-width: 280px;
+  max-height: 350px;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
   cursor: pointer;
+  display: block;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.message-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.message-video {
+  max-width: 280px;
+  max-height: 350px;
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .message-file-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
+  gap: 12px;
+  padding: 14px 16px;
   background: rgba(0, 0, 0, 0.05);
-  border-radius: 8px;
+  border-radius: 12px;
+  min-width: 220px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.message-file-info:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.message-file-info span {
+  font-size: 0.9375rem;
+  color: var(--ion-text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .file-icon {
-  font-size: 24px;
+  font-size: 36px;
   color: var(--ion-color-primary);
+  flex-shrink: 0;
+}
+
+.message-caption {
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  margin-top: 8px;
+  color: var(--ion-color-dark);
+  padding: 0 2px;
+}
+
+.message-caption-outgoing {
+  color: var(--ion-color-primary-contrast);
 }
 
 .reaction-add-button {

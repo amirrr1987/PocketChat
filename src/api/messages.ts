@@ -89,7 +89,7 @@ export function getMessageReactionCounts(messageId: string): Promise<{ counts: R
 
 export async function uploadFile(
   file: File,
-  chatPayload: { singleChatId?: string; groupId?: string; parentMessageId?: string }
+  chatPayload: { singleChatId?: string; groupId?: string; parentMessageId?: string; caption?: string }
 ): Promise<Message> {
   const formData = new FormData();
   formData.append("file", file);
@@ -101,6 +101,9 @@ export async function uploadFile(
   }
   if (chatPayload.parentMessageId) {
     formData.append("parentMessageId", chatPayload.parentMessageId);
+  }
+  if (chatPayload.caption) {
+    formData.append("caption", chatPayload.caption);
   }
 
   const token = getAuthToken();
