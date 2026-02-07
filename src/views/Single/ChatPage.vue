@@ -23,7 +23,7 @@
     </div>
 
     <!-- Messages -->
-    <div v-else class="messages-container">
+    <div v-else ref="messagesContainerRef" class="messages-container">
       <template v-for="message in messages" :key="message.id">
         <!-- Incoming -->
         <div
@@ -267,6 +267,22 @@ const isLoading = ref(true);
 const loadError = ref("");
 const chatMeta = ref<{ singleChatId?: string; groupId?: string } | null>(null);
 const scrollToBottom = inject<(() => void) | null>("chatScrollToBottom", null);
+const messagesContainerRef = ref<HTMLDivElement | null>(null);
+
+function scrollToBottomLocal() {
+  // Try both methods: local container and parent ion-content
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      // Method 1: Scroll the messages container directly
+      const container = messagesContainerRef.value;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+      // Method 2: Also call parent scroll
+      setTimeout(() => scrollToBottom?.(), 50);
+    });
+  });
+}
 
 const chatSocket = useChatSocket();
 const joinedRoom = ref<{ singleChatId?: string; groupId?: string } | null>(null);
@@ -393,7 +409,9 @@ async function loadChatAndMessages() {
       messages.value = list.map(toDisplayMessage);
     }
     await nextTick();
-    setTimeout(() => scrollToBottom?.(), 150);
+    setTimeout(() => {
+      scrollToBottomLocal();
+    }, 200);
 
     if (chatMeta.value && currentUser) {
       // Mark chat as read when opened
@@ -403,7 +421,9 @@ async function loadChatAndMessages() {
         onMessageNew(msg: Message) {
           messages.value = [...messages.value, toDisplayMessage(msg)];
           nextTick().then(() => {
-            setTimeout(() => scrollToBottom?.(), 100);
+            setTimeout(() => {
+              scrollToBottomLocal();
+            }, 100);
           });
           // Auto mark as read if we're in the chat
           if (chatMeta.value && msg.senderId !== currentUser?.id) {
@@ -632,7 +652,7 @@ function handleReactFromMenu() {
 
 .messages-container {
   flex: 1;
-  padding: 16px 12px 20px;
+  padding: 96px 12px 80px;
   display: flex;
   flex-direction: column;
   gap: 10px;
