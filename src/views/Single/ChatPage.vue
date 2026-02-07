@@ -33,7 +33,7 @@
           <ion-avatar class="message-avatar">
             <img :src="message.avatar" :alt="message.senderName" />
           </ion-avatar>
-          <div class="message-bubble message-bubble-incoming" @click="handleMessageClick(message)" @contextmenu.prevent="openMessageMenu(message)">
+          <div class="message-bubble message-bubble-incoming" @contextmenu.prevent="openMessageMenu(message)">
             <div
               v-if="isGroupChat && message.senderName"
               class="message-sender-name"
@@ -91,7 +91,7 @@
 
         <!-- پیام‌های خروجی (راست) -->
         <div v-else class="message-wrapper message-outgoing">
-          <div class="message-bubble message-bubble-outgoing" @click="handleMessageClick(message)" @contextmenu.prevent="openMessageMenu(message)">
+          <div class="message-bubble message-bubble-outgoing" @contextmenu.prevent="openMessageMenu(message)">
             <div
               v-if="message.replyTo"
               class="reply-indicator reply-indicator-outgoing"
@@ -160,6 +160,17 @@
           </div>
         </div>
       </template>
+      <div v-if="typingText" class="typing-indicator">
+        <ion-avatar class="message-avatar typing-avatar">
+          <span>...</span>
+        </ion-avatar>
+        <div class="typing-bubble">
+          <span class="typing-text">{{ typingText }}</span>
+          <span class="typing-dots">
+            <span></span><span></span><span></span>
+          </span>
+        </div>
+      </div>
     </div>
     <MessageReactionPicker
       :is-open="showReactionPicker"
@@ -309,10 +320,6 @@ function toggleReaction(message: DisplayMessage, emoji: string) {
   } else {
     chatSocket.reactToMessage(message.id, emoji, chatMeta.value);
   }
-}
-
-function handleMessageClick() {
-  // For now, do nothing on single click
 }
 
 function openMessageMenu(message: DisplayMessage) {
@@ -502,11 +509,6 @@ const fileHandlerRef = inject<Ref<((file: File) => void) | null> | null>(
   null
 );
 
-const typingSenderRef = inject<Ref<((isTypingNow: boolean) => void) | null> | null>(
-  "chatTypingSender",
-  null
-);
-
 const replyToRef = inject<Ref<{ id: string; text: string; senderName: string } | null>>(
   "chatReplyTo",
   ref<{ id: string; text: string; senderName: string } | null>(null)
@@ -622,18 +624,22 @@ function handleReactFromMenu() {
 
 <style scoped>
 .chat-page {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .messages-container {
-  min-height: 100vh;
-  padding: 16px 12px 120px;
+  flex: 1;
+  padding: 16px 12px 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  justify-content: flex-end;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 .state-container {
