@@ -109,6 +109,7 @@ export default {
     searchPlaceholder: "جستجوی مخاطبین...",
     emptyStateDescription: "برای افزودن مخاطب جدید، دکمه + را فشار دهید",
     lastSeen: "آخرین بازدید",
+    errorLoading: "بارگذاری مخاطبین ناموفق بود",
   },
 
   // Chats
@@ -120,6 +121,7 @@ export default {
     searchPlaceholder: "جستجوی چت‌ها...",
     emptyStateMessage: "هنوز چتی ندارید",
     emptyStateDescription: "برای شروع یک چت جدید، دکمه + را فشار دهید",
+    errorLoading: "بارگذاری چت‌ها ناموفق بود",
   },
 
   // Profile

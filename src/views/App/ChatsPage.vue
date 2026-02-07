@@ -47,6 +47,13 @@
         ></ion-skeleton-text>
       </div>
 
+      <!-- Error State -->
+      <div v-else-if="loadError" class="empty-state-container">
+        <ion-icon :icon="chatbubblesOutline" class="empty-state-icon"></ion-icon>
+        <h2 class="empty-state-title">{{ t("chats.errorLoading") }}</h2>
+        <p class="empty-state-description">{{ loadError }}</p>
+      </div>
+
       <!-- Empty State -->
       <div v-else-if="filteredChats.length === 0" class="empty-state-container">
         <ion-icon
@@ -120,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import {
   IonPage,
@@ -158,114 +165,77 @@ import {
   people,
 } from "ionicons/icons";
 import { useI18n } from "vue-i18n";
+import { fetchChats, type GroupChat, type SingleChat, type ChatsResponse } from "@/api/chats";
+import { getAuthUser } from "@/api/client";
 
 const { t } = useI18n();
 const router = useRouter();
+
+interface ChatItem {
+  id: string;
+  name: string;
+  avatar: string;
+  sender?: { name: string; lastMessage: string; lastMessageTime: string };
+  unreadCount: number;
+}
 
 const isSearchOpen = ref(false);
 const searchQuery = ref("");
 const isFabOpen = ref(false);
 const isLoading = ref(false);
+const chats = ref<ChatItem[]>([]);
+const loadError = ref("");
+
+function toChatItem(g: GroupChat): ChatItem {
+  const name = g.title;
+  const initial = name.slice(0, 2).toUpperCase();
+  return {
+    id: g.id,
+    name,
+    avatar: `https://placehold.co/40x40/4285f4/ffffff?text=${encodeURIComponent(initial)}`,
+    sender: { name: "", lastMessage: "", lastMessageTime: "" },
+    unreadCount: 0,
+  };
+}
+
+function toChatItemSingle(s: SingleChat): ChatItem {
+  const me = getAuthUser();
+  const other = me?.id === s.user1Id ? s.user2 : s.user1;
+  const name = other?.username ?? "";
+  const initial = name.slice(0, 2).toUpperCase() || "?";
+  return {
+    id: s.id,
+    name,
+    avatar: `https://placehold.co/40x40/ea4335/ffffff?text=${encodeURIComponent(initial)}`,
+    sender: { name: "", lastMessage: "", lastMessageTime: "" },
+    unreadCount: 0,
+  };
+}
+
+async function loadChats() {
+  isLoading.value = true;
+  loadError.value = "";
+  try {
+    const res: ChatsResponse = await fetchChats();
+    const groupItems = (res.groups ?? []).map(toChatItem);
+    const singleItems = (res.singleChats ?? []).map(toChatItemSingle);
+    chats.value = [...groupItems, ...singleItems];
+  } catch (e: unknown) {
+    loadError.value = e instanceof Error ? e.message : String(e);
+    chats.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(() => loadChats());
 
 const navigateTo = (path: string) => {
   router.push(path);
 };
 
-const chats = ref([
-  {
-    id: 1,
-    name: "John Doe",
-    avatar: "https://placehold.co/40x40/4285f4/ffffff?text=JD",
-    sender: {
-      name: "John Doe",
-      lastMessage: "Hello, how are you?",
-      lastMessageTime: "12:00",
-    },
-    unreadCount: 2,
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    avatar: "https://placehold.co/40x40/ea4335/ffffff?text=JS",
-    sender: {
-      name: "Jane Smith",
-      lastMessage: "See you tomorrow!",
-      lastMessageTime: "11:30",
-    },
-    unreadCount: 0,
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    avatar: "https://placehold.co/40x40/34a853/ffffff?text=MJ",
-    sender: {
-      name: "Mike Johnson",
-      lastMessage: "Thanks for your help",
-      lastMessageTime: "10:15",
-    },
-    unreadCount: 5,
-  },
-  {
-    id: 4,
-    name: "Sarah Williams",
-    avatar: "https://placehold.co/40x40/fbbc04/ffffff?text=SW",
-    sender: {
-      name: "Sarah Williams",
-      lastMessage: "Let's meet at 3pm",
-      lastMessageTime: "09:45",
-    },
-    unreadCount: 0,
-  },
-  {
-    id: 5,
-    name: "David Brown",
-    avatar: "https://placehold.co/40x40/ff6d01/ffffff?text=DB",
-    sender: {
-      name: "David Brown",
-      lastMessage: "Great idea!",
-      lastMessageTime: "Yesterday",
-    },
-    unreadCount: 1,
-  },
-  {
-    id: 6,
-    name: "Emily Davis",
-    avatar: "https://placehold.co/40x40/9c27b0/ffffff?text=ED",
-    sender: {
-      name: "Emily Davis",
-      lastMessage: "Can you send me the file?",
-      lastMessageTime: "Yesterday",
-    },
-    unreadCount: 0,
-  },
-  {
-    id: 7,
-    name: "Chris Wilson",
-    avatar: "https://placehold.co/40x40/00acc1/ffffff?text=CW",
-    sender: {
-      name: "Chris Wilson",
-      lastMessage: "See you later!",
-      lastMessageTime: "2 days ago",
-    },
-    unreadCount: 0,
-  },
-  {
-    id: 8,
-    name: "Lisa Anderson",
-    avatar: "https://placehold.co/40x40/e91e63/ffffff?text=LA",
-    sender: {
-      name: "Lisa Anderson",
-      lastMessage: "Happy birthday!",
-      lastMessageTime: "3 days ago",
-    },
-    unreadCount: 0,
-  },
-]);
-
 const filteredChats = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return chats.value;
-  }
+  if (!searchQuery.value.trim()) return chats.value;
   const query = searchQuery.value.toLowerCase();
   return chats.value.filter(
     (chat) =>
@@ -276,24 +246,16 @@ const filteredChats = computed(() => {
 
 const toggleSearch = () => {
   isSearchOpen.value = !isSearchOpen.value;
-  if (!isSearchOpen.value) {
-    searchQuery.value = "";
-  }
+  if (!isSearchOpen.value) searchQuery.value = "";
 };
 
 const toggleFabMenu = () => {
   isFabOpen.value = !isFabOpen.value;
 };
 
-const handleNewChat = async () => {
+const handleNewChat = () => {
   isFabOpen.value = false;
-  const toast = await toastController.create({
-    message: t("chats.newChat"),
-    duration: 2000,
-    color: "primary",
-  });
-  toast.present();
-  // TODO: Navigate to new chat page or open contact selector
+  router.push("/contacts");
 };
 
 const handleNewGroup = async () => {
@@ -304,20 +266,15 @@ const handleNewGroup = async () => {
     color: "primary",
   });
   toast.present();
-  // TODO: Navigate to new group page
 };
 
 const formatTime = (time: string | undefined) => {
   if (!time) return "";
-  // Simple time formatting - can be enhanced with date-fns or similar
   return time;
 };
 
 const handleRefresh = async (event: CustomEvent) => {
-  isLoading.value = true;
-  // Simulate async operation
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-  isLoading.value = false;
+  await loadChats();
   (event.target as HTMLIonRefresherElement).complete();
 };
 </script>

@@ -1,7 +1,11 @@
 <template>
   <div class="chat-page">
+    <!-- Loading -->
+    <div v-if="isLoading" class="loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
     <!-- Messages Container -->
-    <div class="messages-container">
+    <div v-else class="messages-container">
       <template v-for="message in messages" :key="message.id">
         <!-- پیام‌های ورودی (چپ) -->
         <div
@@ -12,10 +16,7 @@
             <img :src="message.avatar" :alt="message.senderName" />
           </ion-avatar>
           <div class="message-bubble message-bubble-incoming">
-            <!-- Sender Name -->
             <div class="message-sender-name">{{ message.senderName }}</div>
-
-            <!-- Reply Indicator -->
             <div v-if="message.replyTo" class="reply-indicator">
               <div class="reply-indicator-bar"></div>
               <div class="reply-indicator-content">
@@ -25,33 +26,7 @@
                 <p>{{ message.replyTo.text }}</p>
               </div>
             </div>
-
-            <!-- Link Preview -->
-            <ion-card v-if="message.linkPreview" class="link-preview-card">
-              <img
-                v-if="message.linkPreview.image"
-                :src="message.linkPreview.image"
-                class="link-preview-image"
-              />
-              <ion-card-header>
-                <ion-card-title class="link-preview-title">{{
-                  message.linkPreview.title
-                }}</ion-card-title>
-                <ion-card-subtitle class="link-preview-subtitle">{{
-                  message.linkPreview.description
-                }}</ion-card-subtitle>
-              </ion-card-header>
-              <ion-card-content class="link-preview-content">
-                <ion-text color="primary" class="link-preview-url">{{
-                  message.linkPreview.url
-                }}</ion-text>
-              </ion-card-content>
-            </ion-card>
-
-            <!-- متن پیام -->
             <div class="message-text">{{ message.text }}</div>
-
-            <!-- زمان -->
             <div class="message-time">
               <ion-note>{{ message.time }}</ion-note>
             </div>
@@ -61,7 +36,6 @@
         <!-- پیام‌های خروجی (راست) -->
         <div v-else class="message-wrapper message-outgoing">
           <div class="message-bubble message-bubble-outgoing">
-            <!-- Reply Indicator -->
             <div
               v-if="message.replyTo"
               class="reply-indicator reply-indicator-outgoing"
@@ -74,13 +48,9 @@
                 <p>{{ message.replyTo.text }}</p>
               </div>
             </div>
-
-            <!-- متن پیام -->
             <div class="message-text message-text-outgoing">
               {{ message.text }}
             </div>
-
-            <!-- زمان و وضعیت خواندن -->
             <div class="message-footer">
               <ion-note color="light" class="message-time-outgoing">{{
                 message.time
@@ -104,86 +74,122 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed, onMounted, watch, inject, type Ref } from "vue";
+import { useRoute } from "vue-router";
 import {
   IonAvatar,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardSubtitle,
-  IonCardContent,
   IonText,
   IonNote,
   IonIcon,
+  IonSpinner,
 } from "@ionic/vue";
 import { checkmark, checkmarkDone } from "ionicons/icons";
+import { fetchChatById, type GroupChat, type SingleChat } from "@/api/chats";
+import {
+  fetchMessagesBySingleChat,
+  fetchMessagesByGroup,
+  createMessage,
+  type Message,
+} from "@/api/messages";
+import { getAuthUser } from "@/api/client";
 
-// Messages
-const messages = ref([
-  {
-    id: 1,
-    isOutgoing: true,
-    text: "سلام",
-    time: "07:08",
+interface DisplayMessage {
+  id: string;
+  isOutgoing: boolean;
+  text: string;
+  time: string;
+  read: boolean;
+  senderName: string;
+  avatar: string;
+  replyTo?: { senderName: string; text: string };
+}
+
+const route = useRoute();
+const chatId = computed(() => route.params.id as string);
+
+const currentUser = getAuthUser();
+const messages = ref<DisplayMessage[]>([]);
+const isLoading = ref(true);
+const chatMeta = ref<{ singleChatId?: string; groupId?: string } | null>(null);
+
+function formatTime(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    if (isToday) {
+      return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    }
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+}
+
+function toDisplayMessage(m: Message): DisplayMessage {
+  const senderName = m.sender?.username ?? "";
+  const initial = senderName.slice(0, 2).toUpperCase() || "?";
+  return {
+    id: m.id,
+    isOutgoing: m.senderId === currentUser?.id,
+    text: m.content,
+    time: formatTime(m.createdAt),
     read: true,
-  },
-  {
-    id: 2,
-    isOutgoing: false,
-    text: "سلام",
-    senderName: "Am",
-    avatar: "https://placehold.co/40x40/ea4335/ffffff?text=AM",
-    time: "07:10",
-  },
-  {
-    id: 3,
-    isOutgoing: true,
-    text: "از چیش؟",
-    time: "07:08",
-    read: true,
-    replyTo: {
-      senderName: "Amir Zarchini",
-      text: "از چیش؟",
-    },
-  },
-  {
-    id: 4,
-    isOutgoing: false,
-    text: "اصطلاحات",
-    senderName: "Am",
-    avatar: "https://placehold.co/40x40/ea4335/ffffff?text=AM",
-    time: "07:10",
-    replyTo: {
-      senderName: "Am",
-      text: "اصطلاحات",
-    },
-  },
-  {
-    id: 5,
-    isOutgoing: true,
-    text: "اصطلاحات؟",
-    time: "07:08",
-    read: true,
-    replyTo: {
-      senderName: "Am",
-      text: "اصطلاحات",
-    },
-  },
-  {
-    id: 6,
-    isOutgoing: false,
-    text: "سایت ممنوعه کتاب",
-    senderName: "Am",
-    avatar: "https://placehold.co/40x40/ea4335/ffffff?text=AM",
-    time: "07:10",
-    linkPreview: {
-      image: "https://placehold.co/100x100/9c27b0/ffffff?text=Book",
-      title: "سایت ممنوعه کتاب",
-      description: "دیگه کتاب نظرا",
-      url: "https://www.instagram.com/reel/DTAuT...",
-    },
-  },
-]);
+    senderName,
+    avatar: `https://placehold.co/40x40/ea4335/ffffff?text=${encodeURIComponent(initial)}`,
+  };
+}
+
+async function loadChatAndMessages() {
+  const id = chatId.value;
+  if (!id) return;
+  isLoading.value = true;
+  messages.value = [];
+  chatMeta.value = null;
+  try {
+    const chat = await fetchChatById(id);
+    if ("title" in chat) {
+      const g = chat as GroupChat;
+      chatMeta.value = { groupId: g.id };
+      const list = await fetchMessagesByGroup(g.id);
+      messages.value = list.map(toDisplayMessage);
+    } else {
+      const s = chat as SingleChat;
+      chatMeta.value = { singleChatId: s.id };
+      const list = await fetchMessagesBySingleChat(s.id);
+      messages.value = list.map(toDisplayMessage);
+    }
+  } catch {
+    messages.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(loadChatAndMessages);
+watch(() => route.params.id, loadChatAndMessages);
+
+const sendHandlerRef = inject<Ref<((text: string) => void) | null> | null>("chatSendHandler", null);
+
+onMounted(() => {
+  if (!sendHandlerRef) return;
+  sendHandlerRef.value = async (text: string) => {
+    if (!currentUser || !chatMeta.value) return;
+    try {
+      const payload = {
+        senderId: currentUser.id,
+        content: text,
+        ...(chatMeta.value.singleChatId
+          ? { singleChatId: chatMeta.value.singleChatId }
+          : { groupId: chatMeta.value.groupId }),
+      };
+      const created = await createMessage(payload);
+      messages.value = [...messages.value, toDisplayMessage(created)];
+    } catch (e) {
+      console.error("Send message failed:", e);
+    }
+  };
+});
 </script>
 
 <style scoped>
@@ -379,6 +385,13 @@ const messages = ref([
 .message-bubble:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
 }
 
 /* RTL Support */

@@ -19,7 +19,7 @@
         </div>
 
         <ion-list class="menu-list">
-          <ion-item button @click="navigateTo('/chats')" class="menu-item">
+          <ion-item button @click="navigateTo('/')" class="menu-item">
             <ion-icon :icon="chatbox" slot="start" color="primary"></ion-icon>
             <ion-label>{{ t("nav.chats") }}</ion-label>
           </ion-item>

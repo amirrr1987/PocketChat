@@ -109,6 +109,7 @@ export default {
     searchPlaceholder: "Search contacts...",
     emptyStateDescription: "Tap the + button to add a new contact",
     lastSeen: "Last seen",
+    errorLoading: "Failed to load contacts",
   },
 
   // Chats
@@ -120,6 +121,7 @@ export default {
     searchPlaceholder: "Search chats...",
     emptyStateMessage: "No chats yet",
     emptyStateDescription: "Tap the + button to start a new chat",
+    errorLoading: "Failed to load chats",
   },
 
   // Profile

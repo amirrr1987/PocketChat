@@ -147,7 +147,7 @@ const validatePassword = () => {
     errors.value.password = t("auth.validation.passwordRequired");
     return;
   }
-  if (password.value.length < 6) {
+  if (password.value.length < 8) {
     errors.value.password = t("auth.validation.passwordMinLength");
     return;
   }
@@ -171,7 +171,8 @@ const handleLogin = async () => {
   errorMessage.value = "";
 
   try {
-    await new Promise((r) => setTimeout(r, 1200));
+    const { login, isApiError } = await import("@/api/auth");
+    await login({ username: username.value, password: password.value });
 
     const toast = await toastController.create({
       message: t("auth.loginSuccess"),
@@ -180,9 +181,10 @@ const handleLogin = async () => {
     });
     toast.present();
 
-    router.push("/chats");
-  } catch (e: any) {
-    errorMessage.value = t("auth.loginFailed");
+    router.push("/");
+  } catch (e: unknown) {
+    const { isApiError } = await import("@/api/auth");
+    errorMessage.value = isApiError(e) && e.message ? e.message : t("auth.loginFailed");
   } finally {
     isLoading.value = false;
   }

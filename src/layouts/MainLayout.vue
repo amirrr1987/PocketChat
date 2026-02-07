@@ -19,7 +19,7 @@
         </div>
 
         <ion-list class="menu-list">
-          <ion-item button @click="navigateTo('/chats')" class="menu-item">
+          <ion-item button @click="navigateTo('/')" class="menu-item">
             <ion-icon :icon="chatbox" slot="start" color="primary"></ion-icon>
             <ion-label>{{ t("nav.chats") }}</ion-label>
           </ion-item>
@@ -60,7 +60,7 @@
     <ion-tabs id="main-content">
       <ion-router-outlet></ion-router-outlet>
       <ion-tab-bar slot="bottom">
-        <ion-tab-button tab="chats" href="/chats">
+        <ion-tab-button tab="chats" href="/">
           <ion-icon aria-hidden="true" :icon="chatbox" />
           <ion-label>{{ t("nav.chats") }}</ion-label>
         </ion-tab-button>

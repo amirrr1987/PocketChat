@@ -4,7 +4,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button default-href="/chats"></ion-back-button>
+          <ion-back-button default-href="/"></ion-back-button>
           <ion-avatar class="ion-margin-start">
             <img :src="contactAvatar" :alt="contactName" />
           </ion-avatar>
@@ -116,20 +116,49 @@ import {
   mic,
   send,
 } from "ionicons/icons";
-import { ref, computed } from "vue";
+import { ref, computed, watch, provide } from "vue";
+import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { fetchChatById, type GroupChat, type SingleChat } from "@/api/chats";
+import { getAuthUser } from "@/api/client";
 
 const { t } = useI18n();
+const route = useRoute();
 
-// Props برای اطلاعات تماس
-const contactName = ref("+98 939 195 9469");
+const contactName = ref("");
 const contactStatus = computed(() => t("chat.connecting"));
-const contactAvatar = ref("https://placehold.co/40x40/4285f4/ffffff?text=AM");
+const contactAvatar = ref("https://placehold.co/40x40/4285f4/ffffff?text=?");
 
-// Pinned Message
-const pinnedMessage = ref<{ link: string } | null>({
-  link: "https://meet.google.com/hxi-kcct-kks",
-});
+const chatId = computed(() => route.params.id as string);
+
+async function loadChat() {
+  const id = chatId.value;
+  if (!id) return;
+  contactName.value = "";
+  contactAvatar.value = "https://placehold.co/40x40/4285f4/ffffff?text=?";
+  try {
+    const chat = await fetchChatById(id);
+    if ("title" in chat) {
+      const g = chat as GroupChat;
+      contactName.value = g.title;
+      const initial = (g.owner?.username ?? g.title).slice(0, 2).toUpperCase();
+      contactAvatar.value = `https://placehold.co/40x40/4285f4/ffffff?text=${encodeURIComponent(initial)}`;
+    } else {
+      const s = chat as SingleChat;
+      const me = getAuthUser();
+      const other = me?.id === s.user1Id ? s.user2 : s.user1;
+      contactName.value = other?.username ?? "";
+      const initial = (other?.username ?? "?").slice(0, 2).toUpperCase();
+      contactAvatar.value = `https://placehold.co/40x40/ea4335/ffffff?text=${encodeURIComponent(initial)}`;
+    }
+  } catch {
+    contactName.value = t("chat.connecting");
+  }
+}
+
+watch(chatId, loadChat, { immediate: true });
+
+const pinnedMessage = ref<{ link: string } | null>(null);
 
 const dismissPinned = () => {
   pinnedMessage.value = null;
@@ -137,11 +166,14 @@ const dismissPinned = () => {
 
 const messageText = ref("");
 
+const sendHandlerRef = ref<((text: string) => void) | null>(null);
+provide("chatSendHandler", sendHandlerRef);
+
 const sendMessage = () => {
-  if (messageText.value.trim()) {
-    // Emit event or handle message sending
-    messageText.value = "";
-  }
+  const text = messageText.value.trim();
+  if (!text) return;
+  sendHandlerRef.value?.(text);
+  messageText.value = "";
 };
 </script>
 

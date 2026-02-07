@@ -47,6 +47,13 @@
         ></ion-skeleton-text>
       </div>
 
+      <!-- Error State -->
+      <div v-else-if="loadError" class="empty-state-container">
+        <ion-icon :icon="peopleOutline" class="empty-state-icon"></ion-icon>
+        <h2 class="empty-state-title">{{ t("contacts.errorLoading") }}</h2>
+        <p class="empty-state-description">{{ loadError }}</p>
+      </div>
+
       <!-- Empty State -->
       <div
         v-else-if="filteredContacts.length === 0"
@@ -71,7 +78,11 @@
       <ion-list v-else class="contacts-list">
         <template v-for="contact in filteredContacts" :key="contact.id">
           <ion-item-sliding>
-            <ion-item :button="true" class="contact-item">
+            <ion-item
+              :button="true"
+              class="contact-item"
+              @click="handleContactClick(contact)"
+            >
               <ion-avatar
                 aria-hidden="true"
                 slot="start"
@@ -110,7 +121,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import {
   IonPage,
   IonHeader,
@@ -131,6 +143,7 @@ import {
   IonSearchbar,
   IonBadge,
   IonSkeletonText,
+  toastController,
 } from "@ionic/vue";
 import {
   ellipse,
@@ -141,95 +154,97 @@ import {
   peopleOutline,
 } from "ionicons/icons";
 import { useI18n } from "vue-i18n";
+import { fetchUsers, type User } from "@/api/users";
+import { getAuthUser } from "@/api/client";
+import { createSingleChat } from "@/api/chats";
 
 const { t } = useI18n();
+const router = useRouter();
 
 const isSearchOpen = ref(false);
 const searchQuery = ref("");
 const isLoading = ref(false);
+const loadError = ref("");
 
-const contacts = ref([
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "1234567890",
-    isOnline: true,
-    lastSeen: "2 hours ago",
-    avatar: "https://placehold.co/40x40/4285f4/ffffff?text=JD",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    phone: "1234567890",
+interface ContactItem {
+  id: string;
+  name: string;
+  avatar: string;
+  isOnline: boolean;
+  lastSeen: string;
+}
+
+const contacts = ref<ContactItem[]>([]);
+
+function toContactItem(u: User): ContactItem {
+  const initial = u.username.slice(0, 2).toUpperCase();
+  return {
+    id: u.id,
+    name: u.username,
+    avatar: `https://placehold.co/40x40/4285f4/ffffff?text=${encodeURIComponent(initial)}`,
     isOnline: false,
-    lastSeen: "1 day ago",
-    avatar: "https://placehold.co/40x40/ea4335/ffffff?text=JS",
-  },
-  {
-    id: 3,
-    name: "Jim Johnson",
-    email: "jim.johnson@example.com",
-    phone: "1234567890",
-    isOnline: true,
-    lastSeen: "3 hours ago",
-    avatar: "https://placehold.co/40x40/34a853/ffffff?text=JJ",
-  },
-  {
-    id: 4,
-    name: "Jill Williams",
-    email: "jill.williams@example.com",
-    phone: "1234567890",
-    isOnline: false,
-    lastSeen: "2 days ago",
-    avatar: "https://placehold.co/40x40/fbbc04/ffffff?text=JW",
-  },
-  {
-    id: 5,
-    name: "Jack Brown",
-    email: "jack.brown@example.com",
-    phone: "1234567890",
-    isOnline: true,
-    lastSeen: "1 hour ago",
-    avatar: "https://placehold.co/40x40/ff6d01/ffffff?text=JB",
-  },
-  {
-    id: 6,
-    name: "Alex Davis",
-    email: "alex.davis@example.com",
-    phone: "1234567890",
-    isOnline: false,
-    lastSeen: "3 days ago",
-    avatar: "https://placehold.co/40x40/9c27b0/ffffff?text=AD",
-  },
-]);
+    lastSeen: "",
+  };
+}
+
+async function loadContacts() {
+  isLoading.value = true;
+  loadError.value = "";
+  try {
+    const list = await fetchUsers();
+    const me = getAuthUser();
+    const others = me ? list.filter((u) => u.id !== me.id) : list;
+    contacts.value = others.map(toContactItem);
+  } catch (e: unknown) {
+    loadError.value = e instanceof Error ? e.message : String(e);
+    contacts.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(loadContacts);
 
 const filteredContacts = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return contacts.value;
-  }
+  if (!searchQuery.value.trim()) return contacts.value;
   const query = searchQuery.value.toLowerCase();
-  return contacts.value.filter(
-    (contact) =>
-      contact.name.toLowerCase().includes(query) ||
-      contact.email.toLowerCase().includes(query)
+  return contacts.value.filter((contact) =>
+    contact.name.toLowerCase().includes(query)
   );
 });
 
 const toggleSearch = () => {
   isSearchOpen.value = !isSearchOpen.value;
-  if (!isSearchOpen.value) {
-    searchQuery.value = "";
-  }
+  if (!isSearchOpen.value) searchQuery.value = "";
 };
 
 const handleRefresh = async (event: CustomEvent) => {
-  isLoading.value = true;
-  // Simulate async operation
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-  isLoading.value = false;
+  await loadContacts();
   (event.target as HTMLIonRefresherElement).complete();
+};
+
+const handleContactClick = async (contact: ContactItem) => {
+  const me = getAuthUser();
+  if (!me) {
+    const toast = await toastController.create({
+      message: t("auth.login"),
+      duration: 2000,
+      color: "warning",
+    });
+    toast.present();
+    return;
+  }
+  try {
+    const singleChat = await createSingleChat(me.id, contact.id);
+    router.push(`/chat/${singleChat.id}`);
+  } catch (e: unknown) {
+    const toast = await toastController.create({
+      message: e instanceof Error ? e.message : String(e),
+      duration: 3000,
+      color: "danger",
+    });
+    toast.present();
+  }
 };
 </script>
 

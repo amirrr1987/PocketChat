@@ -9,12 +9,9 @@ const routes: Array<RouteRecordRaw> = [
     path: "/",
     component: MainLayout,
     children: [
+
       {
         path: "",
-        redirect: "/chats",
-      },
-      {
-        path: "chats",
         component: () => import("@/views/App/ChatsPage.vue"),
       },
       {
