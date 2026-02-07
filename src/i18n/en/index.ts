@@ -91,6 +91,7 @@ export default {
   chat: {
     typeMessage: "Type a message",
     connecting: "Connecting...",
+    loading: "Loading...",
     online: "Online",
     offline: "Offline",
     pinnedMessage: "Pinned Message",
@@ -99,6 +100,10 @@ export default {
     attach: "Attach",
     emoji: "Emoji",
     voice: "Voice",
+    noMessages: "No messages yet",
+    noMessagesHint: "Say hello!",
+    loadError: "Could not load messages",
+    retry: "Retry",
   },
 
   // Contacts

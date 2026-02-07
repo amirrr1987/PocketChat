@@ -91,6 +91,7 @@ export default {
   chat: {
     typeMessage: "پیام بنویسید",
     connecting: "در حال اتصال...",
+    loading: "در حال بارگذاری...",
     online: "آنلاین",
     offline: "آفلاین",
     pinnedMessage: "پیام پین شده",
@@ -99,6 +100,10 @@ export default {
     attach: "ضمیمه",
     emoji: "ایموجی",
     voice: "صدا",
+    noMessages: "هنوز پیامی نیست",
+    noMessagesHint: "سلام بفرست!",
+    loadError: "بارگذاری پیام‌ها ناموفق بود",
+    retry: "تلاش دوباره",
   },
 
   // Contacts

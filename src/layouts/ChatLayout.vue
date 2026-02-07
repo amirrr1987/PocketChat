@@ -1,86 +1,70 @@
 <template>
   <ion-page>
-    <!-- Header با اطلاعات تماس -->
-    <ion-header>
+    <ion-header class="ion-no-border">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button default-href="/"></ion-back-button>
-          <ion-avatar class="ion-margin-start">
-            <img :src="contactAvatar" :alt="contactName" />
+          <ion-back-button default-href="/" :text="''"></ion-back-button>
+          <ion-avatar class="header-avatar">
+            <img v-if="contactAvatar" :src="contactAvatar" :alt="contactName" />
+            <ion-spinner v-else-if="headerLoading" name="crescent"></ion-spinner>
           </ion-avatar>
         </ion-buttons>
 
-        <ion-title>
-          <div class="ion-text-left">
-            <h2 class="ion-no-margin ion-text-wrap">{{ contactName }}</h2>
-            <ion-note color="medium">{{ contactStatus }}</ion-note>
-          </div>
+        <ion-title class="ion-text-start header-title">
+          <span class="header-name">{{ contactName || t('chat.loading') }}</span>
+          <span v-if="contactName" class="header-status-row">
+            <span
+              class="status-dot"
+              :class="isContactOnline ? 'status-dot-online' : 'status-dot-offline'"
+              :title="isContactOnline ? t('chat.online') : t('chat.offline')"
+              aria-hidden="true"
+            ></span>
+          </span>
         </ion-title>
 
         <ion-buttons slot="end">
-          <ion-button fill="clear" size="default">
+          <ion-button fill="clear" size="small" aria-label="Call">
             <ion-icon :icon="call" slot="icon-only"></ion-icon>
           </ion-button>
-          <ion-button fill="clear" size="default">
+          <ion-button fill="clear" size="small" aria-label="More">
             <ion-icon :icon="ellipsisVertical" slot="icon-only"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
-    <!-- محتوای چت -->
-    <ion-content :fullscreen="true" class="chat-content">
+    <ion-content ref="contentRef" :fullscreen="true" class="chat-content">
       <ion-router-outlet />
     </ion-content>
 
-    <!-- Footer با نوار ورودی پیام -->
-    <ion-footer>
+    <ion-footer class="ion-no-border footer-toolbar">
       <ion-toolbar>
-        <!-- Pinned Message Banner -->
-        <ion-item
-          v-if="pinnedMessage"
-          color="light"
-          lines="none"
-          class="pinned-message"
-        >
-          <ion-icon :icon="pin" slot="start" color="primary"></ion-icon>
-          <ion-label>
-            <h3>{{ t("chat.pinnedMessage") }}</h3>
-            <p>{{ pinnedMessage.link }}</p>
-          </ion-label>
-          <ion-button fill="clear" slot="end" @click="dismissPinned">
-            <ion-icon :icon="close" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-item>
-
-        <!-- Message Input Area -->
-        <div class="message-input-container">
-          <ion-button fill="clear" class="emoji-button">
-            <ion-icon :icon="happy" slot="icon-only"></ion-icon>
-          </ion-button>
-
-          <ion-input
-            v-model="messageText"
-            :placeholder="t('chat.typeMessage')"
-            class="message-input"
-            @keyup.enter="sendMessage"
-          ></ion-input>
-
-          <ion-button
-            v-if="messageText.trim()"
-            fill="clear"
-            @click="sendMessage"
-            class="send-button"
-          >
-            <ion-icon :icon="send" slot="icon-only" color="primary"></ion-icon>
-          </ion-button>
-          <ion-button v-else fill="clear" class="attach-button">
-            <ion-icon :icon="attach" slot="icon-only"></ion-icon>
-          </ion-button>
-
-          <ion-button fill="clear" class="mic-button">
-            <ion-icon :icon="mic" slot="icon-only"></ion-icon>
-          </ion-button>
+        <div class="message-input-wrapper">
+          <ion-item lines="none" class="message-input-item">
+            <ion-button fill="clear" slot="start" class="input-action-btn" aria-label="Emoji">
+              <ion-icon :icon="happy"></ion-icon>
+            </ion-button>
+            <ion-input
+              v-model="messageText"
+              :placeholder="t('chat.typeMessage')"
+              class="message-input"
+              enterkeyhint="send"
+              @keyup.enter.exact.prevent="sendMessage"
+            ></ion-input>
+            <ion-button
+              v-if="messageText.trim()"
+              fill="clear"
+              slot="end"
+              class="input-action-btn send-btn"
+              @click="sendMessage"
+              aria-label="Send"
+            >
+              <ion-icon :icon="send" color="primary"></ion-icon>
+            </ion-button>
+            <ion-button v-else fill="clear" slot="end" class="input-action-btn" aria-label="Attach">
+              <ion-icon :icon="attach"></ion-icon>
+            </ion-button>
+          </ion-item>
         </div>
       </ion-toolbar>
     </ion-footer>
@@ -99,21 +83,17 @@ import {
   IonButton,
   IonBackButton,
   IonAvatar,
-  IonLabel,
-  IonNote,
   IonIcon,
   IonItem,
   IonInput,
   IonRouterOutlet,
+  IonSpinner,
 } from "@ionic/vue";
 import {
   call,
   ellipsisVertical,
-  pin,
-  close,
   happy,
   attach,
-  mic,
   send,
 } from "ionicons/icons";
 import { ref, computed, watch, provide } from "vue";
@@ -126,16 +106,19 @@ const { t } = useI18n();
 const route = useRoute();
 
 const contactName = ref("");
-const contactStatus = computed(() => t("chat.connecting"));
-const contactAvatar = ref("https://placehold.co/40x40/4285f4/ffffff?text=?");
+const headerLoading = ref(true);
+/** When true show green dot, else gray. Can be wired to presence API later. */
+const isContactOnline = ref(false);
+const contactAvatar = ref("");
 
 const chatId = computed(() => route.params.id as string);
 
 async function loadChat() {
   const id = chatId.value;
   if (!id) return;
+  headerLoading.value = true;
   contactName.value = "";
-  contactAvatar.value = "https://placehold.co/40x40/4285f4/ffffff?text=?";
+  contactAvatar.value = "";
   try {
     const chat = await fetchChatById(id);
     if ("title" in chat) {
@@ -152,22 +135,31 @@ async function loadChat() {
       contactAvatar.value = `https://placehold.co/40x40/ea4335/ffffff?text=${encodeURIComponent(initial)}`;
     }
   } catch {
-    contactName.value = t("chat.connecting");
+    contactName.value = t("chat.loadError");
+  } finally {
+    headerLoading.value = false;
   }
 }
 
 watch(chatId, loadChat, { immediate: true });
 
-const pinnedMessage = ref<{ link: string } | null>(null);
-
-const dismissPinned = () => {
-  pinnedMessage.value = null;
-};
-
 const messageText = ref("");
 
 const sendHandlerRef = ref<((text: string) => void) | null>(null);
 provide("chatSendHandler", sendHandlerRef);
+
+const contentRef = ref<HTMLElement | { $el?: HTMLElement } | null>(null);
+function scrollToBottom() {
+  const raw = contentRef.value;
+  const el = (raw && typeof raw === "object" && "$el" in raw ? (raw as { $el?: HTMLElement }).$el : raw) as (HTMLElement & { getScrollElement?(): Promise<HTMLElement> }) | null | undefined;
+  const getScroll = el && typeof el?.getScrollElement === "function" ? el.getScrollElement : null;
+  if (getScroll) {
+    getScroll().then((scrollEl) => {
+      scrollEl.scrollTop = scrollEl.scrollHeight;
+    });
+  }
+}
+provide("chatScrollToBottom", scrollToBottom);
 
 const sendMessage = () => {
   const text = messageText.value.trim();
@@ -182,86 +174,97 @@ const sendMessage = () => {
   --background: var(--ion-background-color);
 }
 
-.pinned-message {
-  --padding-start: 0;
-  --padding-end: 0;
-  --inner-padding-end: 0;
-  margin-bottom: 4px;
+.header-avatar {
+  width: 36px;
+  height: 36px;
+  margin-inline-start: 8px;
 }
 
-.pinned-message ion-label h3 {
-  font-size: 0.875rem;
+.header-avatar ion-spinner {
+  width: 24px;
+  height: 24px;
+}
+
+.header-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-inline-start: 0;
+  padding-inline-end: 0;
+  min-width: 0;
+}
+
+.header-name {
+  font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.pinned-message ion-label p {
-  font-size: 0.75rem;
-  color: var(--ion-color-medium);
-  margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 100%;
 }
 
-.message-input-container {
+.header-status-row {
   display: flex;
   align-items: center;
-  padding: 8px 4px;
-  gap: 4px;
+  margin-top: 2px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot-online {
+  background-color: var(--ion-color-success);
+}
+
+.status-dot-offline {
+  background-color: var(--ion-color-medium);
+}
+
+.footer-toolbar {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.message-input-wrapper {
+  padding: 8px 0;
+  padding-inline: 8px;
+}
+
+.message-input-item {
+  --background: var(--ion-color-light);
+  --border-radius: 24px;
+  --padding-start: 4px;
+  --padding-end: 4px;
+  --inner-padding-end: 4px;
+  --min-height: 48px;
+  border-radius: 24px;
+  margin: 0;
 }
 
 .message-input {
-  flex: 1;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
   --padding-start: 12px;
   --padding-end: 12px;
-  --background: var(--ion-color-light);
-  --border-radius: 24px;
-  --min-height: 40px;
-  margin: 0 4px;
-  transition: all 0.2s ease-in-out;
+  font-size: 1rem;
 }
 
-.message-input:focus-within {
-  --background: var(--ion-background-color);
-  box-shadow: 0 0 0 2px var(--ion-color-primary-tint);
-}
-
-.emoji-button,
-.attach-button,
-.mic-button,
-.send-button {
+.input-action-btn {
   --padding-start: 8px;
   --padding-end: 8px;
   margin: 0;
-  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+  min-width: 44px;
+  min-height: 44px;
 }
 
-.emoji-button:active,
-.attach-button:active,
-.mic-button:active,
-.send-button:active {
-  transform: scale(0.95);
-  opacity: 0.8;
+.send-btn ion-icon {
+  font-size: 1.5rem;
 }
 
-ion-title {
-  padding-inline-start: 0;
-  padding-inline-end: 0;
-}
-
-ion-title h2 {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-ion-title ion-note {
-  font-size: 0.75rem;
-}
-
-ion-avatar {
-  width: 36px;
-  height: 36px;
+[dir="rtl"] .header-title {
+  align-items: flex-end;
 }
 </style>

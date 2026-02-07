@@ -1,13 +1,31 @@
 <template>
   <div class="chat-page">
     <!-- Loading -->
-    <div v-if="isLoading" class="loading-container">
+    <div v-if="isLoading" class="state-container">
       <ion-spinner name="crescent"></ion-spinner>
+      <p class="state-text">{{ t("chat.loading") }}</p>
     </div>
-    <!-- Messages Container -->
+
+    <!-- Error -->
+    <div v-else-if="loadError" class="state-container">
+      <ion-icon :icon="warningOutline" class="state-icon"></ion-icon>
+      <p class="state-text">{{ loadError }}</p>
+      <ion-button fill="outline" size="small" @click="loadChatAndMessages">
+        {{ t("chat.retry") }}
+      </ion-button>
+    </div>
+
+    <!-- Empty -->
+    <div v-else-if="messages.length === 0" class="state-container state-empty">
+      <ion-icon :icon="chatbubbleOutline" class="state-icon"></ion-icon>
+      <p class="state-text">{{ t("chat.noMessages") }}</p>
+      <p class="state-hint">{{ t("chat.noMessagesHint") }}</p>
+    </div>
+
+    <!-- Messages -->
     <div v-else class="messages-container">
       <template v-for="message in messages" :key="message.id">
-        <!-- پیام‌های ورودی (چپ) -->
+        <!-- Incoming -->
         <div
           v-if="!message.isOutgoing"
           class="message-wrapper message-incoming"
@@ -16,7 +34,7 @@
             <img :src="message.avatar" :alt="message.senderName" />
           </ion-avatar>
           <div class="message-bubble message-bubble-incoming">
-            <div class="message-sender-name">{{ message.senderName }}</div>
+            <div v-if="isGroupChat && message.senderName" class="message-sender-name">{{ message.senderName }}</div>
             <div v-if="message.replyTo" class="reply-indicator">
               <div class="reply-indicator-bar"></div>
               <div class="reply-indicator-content">
@@ -74,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, inject, type Ref } from "vue";
+import { ref, computed, onMounted, watch, inject, nextTick, type Ref } from "vue";
 import { useRoute } from "vue-router";
 import {
   IonAvatar,
@@ -82,8 +100,10 @@ import {
   IonNote,
   IonIcon,
   IonSpinner,
+  IonButton,
 } from "@ionic/vue";
-import { checkmark, checkmarkDone } from "ionicons/icons";
+import { checkmark, checkmarkDone, warningOutline, chatbubbleOutline } from "ionicons/icons";
+import { useI18n } from "vue-i18n";
 import { fetchChatById, type GroupChat, type SingleChat } from "@/api/chats";
 import {
   fetchMessagesBySingleChat,
@@ -91,7 +111,7 @@ import {
   createMessage,
   type Message,
 } from "@/api/messages";
-import { getAuthUser } from "@/api/client";
+import { getAuthUser, type ApiError } from "@/api/client";
 
 interface DisplayMessage {
   id: string;
@@ -104,13 +124,18 @@ interface DisplayMessage {
   replyTo?: { senderName: string; text: string };
 }
 
+const { t } = useI18n();
 const route = useRoute();
 const chatId = computed(() => route.params.id as string);
 
 const currentUser = getAuthUser();
 const messages = ref<DisplayMessage[]>([]);
 const isLoading = ref(true);
+const loadError = ref("");
 const chatMeta = ref<{ singleChatId?: string; groupId?: string } | null>(null);
+const scrollToBottom = inject<(() => void) | null>("chatScrollToBottom", null);
+
+const isGroupChat = computed(() => !!chatMeta.value?.groupId);
 
 function formatTime(dateStr: string): string {
   try {
@@ -144,6 +169,7 @@ async function loadChatAndMessages() {
   const id = chatId.value;
   if (!id) return;
   isLoading.value = true;
+  loadError.value = "";
   messages.value = [];
   chatMeta.value = null;
   try {
@@ -159,12 +185,21 @@ async function loadChatAndMessages() {
       const list = await fetchMessagesBySingleChat(s.id);
       messages.value = list.map(toDisplayMessage);
     }
-  } catch {
+    await nextTick();
+    scrollToBottom?.();
+  } catch (e) {
+    console.error("ChatPage: load chat/messages failed", e);
+    const msg =
+      e && typeof e === "object" && "message" in e && typeof (e as ApiError).message === "string"
+        ? (e as ApiError).message
+        : t("chat.loadError");
+    loadError.value = msg;
     messages.value = [];
   } finally {
     isLoading.value = false;
   }
 }
+
 
 onMounted(loadChatAndMessages);
 watch(() => route.params.id, loadChatAndMessages);
@@ -185,6 +220,8 @@ onMounted(() => {
       };
       const created = await createMessage(payload);
       messages.value = [...messages.value, toDisplayMessage(created)];
+      await nextTick();
+      scrollToBottom?.();
     } catch (e) {
       console.error("Send message failed:", e);
     }
@@ -194,18 +231,50 @@ onMounted(() => {
 
 <style scoped>
 .chat-page {
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .messages-container {
-  flex: 1;
-  padding: 16px 12px;
+  padding: 16px 12px 80px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
+  gap: 10px;
+}
+
+.state-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.state-container.state-empty {
+  justify-content: center;
+}
+
+.state-icon {
+  font-size: 64px;
+  color: var(--ion-color-medium);
+  opacity: 0.6;
+  margin-bottom: 16px;
+}
+
+.state-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ion-text-color);
+  margin: 0 0 8px 0;
+}
+
+.state-hint {
+  font-size: 0.875rem;
+  color: var(--ion-color-medium);
+  margin: 0;
 }
 
 .message-wrapper {
@@ -387,12 +456,6 @@ onMounted(() => {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
-.loading-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
 
 /* RTL Support */
 [dir="rtl"] .message-incoming {
