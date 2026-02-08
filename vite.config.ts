@@ -12,14 +12,6 @@ export default defineConfig({
       "/api": {
         target: "http://localhost:5050",
         changeOrigin: true,
-        configure: (proxy) => {
-          proxy.on("proxyReq", (proxyReq, req) => {
-            const auth = (req.headers as Record<string, string>)["authorization"];
-            if (auth) {
-              proxyReq.setHeader("Authorization", auth);
-            }
-          });
-        },
       },
     },
   },

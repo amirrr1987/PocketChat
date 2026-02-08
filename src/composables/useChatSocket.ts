@@ -124,7 +124,11 @@ export function useChatSocket() {
     return socket;
   }
 
-  function connect(callbacks: ChatSocketCallbacks = {}): Socket {
+  function connect(callbacks: ChatSocketCallbacks = {}): Socket | null {
+    const token = getAuthToken();
+    if (!token) {
+      return null;
+    }
     const s = getSocket();
     const off = () => {
       s.off("message:new");
