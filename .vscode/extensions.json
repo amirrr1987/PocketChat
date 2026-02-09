@@ -1,5 +1,10 @@
 {
-    "recommendations": [
-        "Webnative.webnative"
-    ]
+  "recommendations": [
+    "Vue.volar",
+    "vitest.explorer",
+    "ms-playwright.playwright",
+    "dbaeumer.vscode-eslint",
+    "EditorConfig.EditorConfig",
+    "oxc.oxc-vscode"
+  ]
 }

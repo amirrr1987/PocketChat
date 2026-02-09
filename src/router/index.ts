@@ -1,77 +1,71 @@
-import { createRouter, createWebHistory } from "@ionic/vue-router";
-import { RouteRecordRaw } from "vue-router";
-import MainLayout from "../layouts/MainLayout.vue";
-import AuthLayout from "../layouts/AuthLayout.vue";
-import ChatLayout from "../layouts/ChatLayout.vue";
-import BlankLayout from "../layouts/BlankLayout.vue";
-const routes: Array<RouteRecordRaw> = [
-  {
-    path: "/",
-    component: MainLayout,
-    children: [
-
-      {
-        path: "",
-        component: () => import("@/views/App/ChatsPage.vue"),
-      },
-      {
-        path: "contacts",
-        component: () => import("@/views/App/ContactsPage.vue"),
-      },
-    ],
-  },
-  {
-    path: "/app",
-    component: BlankLayout,
-    children: [
-      {
-        path: "",
-        redirect: "/app/settings",
-      },
-      {
-        path: "settings",
-        component: () => import("@/views/App/SettingsPage.vue"),
-      },
-      {
-        path: "profile",
-        component: () => import("@/views/App/ProfilePage.vue"),
-      },
-    ],
-  },
-  {
-    path: "/chat/:id",
-    component: ChatLayout,
-    children: [
-      {
-        path: "",
-        component: () => import("@/views/Single/ChatPage.vue"),
-      },
-    ],
-  },
-
-  {
-    path: "/auth/",
-    component: AuthLayout,
-    children: [
-      {
-        path: "",
-        redirect: "/auth/login",
-      },
-      {
-        path: "login",
-        component: () => import("@/views/Auth/LoginPage.vue"),
-      },
-      {
-        path: "register",
-        component: () => import("@/views/Auth/RegisterPage.vue"),
-      },
-    ],
-  },
-];
+import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes,
-});
+  routes: [
+    {
+      path: '/auth',
+      name: 'auth',
+      component: () => import('@/layouts/AuthLayout.vue'),
+      meta: { guest: true },
+      redirect: { name: 'login' },
+      children: [
+        {
+          path: 'login',
+          name: 'login',
+          component: () => import('@/views/LoginView.vue'),
+        },
+        {
+          path: 'register',
+          name: 'register',
+          component: () => import('@/views/RegisterView.vue'),
+        },
+      ],
+    },
+    {
+      path: '/',
+      name: 'main-layout',
+      component: () => import('@/layouts/MainLayout.vue'),
+      meta: { requiresAuth: true },
+      redirect: { name: 'chats' },
+      children: [
+        {
+          path: '',
+          name: 'chats',
+          component: () => import('@/views/ChatsView.vue'),
+        },
+        {
+          path: 'profile',
+          name: 'profile',
+          component: () => import('@/views/ProfileView.vue'),
+        },
+        {
+          path: 'contacts',
+          name: 'contacts',
+          component: () => import('@/views/ContactsView.vue'),
+        },
+      ],
+    },
+  ],
+})
 
-export default router;
+router.beforeEach((to, _from, next) => {
+  const token = localStorage.getItem('chat_token')
+  const loggedIn = !!token
+  
+  // Redirect to login if trying to access protected route without auth
+  if (to.meta.requiresAuth && !loggedIn) {
+    next({ name: 'login' })
+    return
+  }
+  
+  // Redirect to chats if logged in user tries to access auth pages
+  if (to.meta.guest && loggedIn) {
+    next({ name: 'chats' })
+    return
+  }
+  
+  next()
+})
+
+export default router

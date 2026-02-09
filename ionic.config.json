@@ -1,7 +1,0 @@
-{
-  "name": "PocketChat",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "vue-vite"
-}
