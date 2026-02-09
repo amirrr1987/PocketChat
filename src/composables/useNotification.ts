@@ -62,12 +62,12 @@ export function useNotification() {
     if ("serviceWorker" in navigator) {
       try {
         const registration = await navigator.serviceWorker.ready;
-        const notificationOptions: NotificationOptions = {
+        const notificationOptions = {
           badge: "/logo.svg",
           icon: "/logo.svg",
-          renotify: true, // Allow re-notification even with same tag
+          renotify: true,
           ...options,
-        };
+        } as NotificationOptions & { renotify?: boolean };
         await registration.showNotification(title, notificationOptions);
         return;
       } catch (error) {

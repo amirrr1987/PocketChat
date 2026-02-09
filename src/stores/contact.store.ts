@@ -17,12 +17,12 @@ export const useContactStore = defineStore("contact", () => {
     socket.off("user:online");
     socket.off("user:offline");
     socket.on("user:list", (list: IUser[] | { id: string; username: string }[]) => {
-      onlineUsers.value = (Array.isArray(list) ? list : []).map((u) => ({
+      onlineUsers.value = (Array.isArray(list) ? list : []).map((u): IUser => ({
         id: u.id,
         username: u.username,
-        email: "email" in u ? u.email : undefined,
-        avatarUrl: "avatarUrl" in u ? u.avatarUrl : undefined,
-        lastSeenAt: "lastSeenAt" in u ? u.lastSeenAt : undefined,
+        email: "email" in u ? (u.email as string | undefined) : undefined,
+        avatarUrl: "avatarUrl" in u ? (u.avatarUrl as string | undefined) : undefined,
+        lastSeenAt: "lastSeenAt" in u ? (u.lastSeenAt as string | undefined) : undefined,
       }));
     });
     socket.on("user:online", (user: IUser | { id: string; username: string }) => {
