@@ -2,9 +2,12 @@
   <RouterView />
 </template>
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, onUnmounted } from "vue";
 import { RouterView } from "vue-router";
 import { useAuthStore } from "@/stores/auth.store";
+import { useNotification } from "@/composables/useNotification";
+
+const { setupMessageNotifications, cleanupMessageNotifications } = useNotification();
 
 onMounted(async () => {
   const authStore = useAuthStore();
@@ -13,5 +16,12 @@ onMounted(async () => {
   if (authStore.token) {
     await authStore.loadUserData();
   }
+
+  // Setup message notifications
+  setupMessageNotifications();
+});
+
+onUnmounted(() => {
+  cleanupMessageNotifications();
 });
 </script>
