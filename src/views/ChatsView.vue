@@ -1,173 +1,168 @@
 <template>
-  <div class="flex h-full">
+  <div class="h-full flex flex-col">
+    <!-- Header -->
+    <div class="p-4 border-b border-stone-200">
+      <h1 class="text-xl font-semibold text-stone-800">Conversations</h1>
+    </div>
+
     <!-- Conversations List -->
-    <div class="w-80 border-r border-stone-200 flex flex-col">
-      <div class="p-4 border-b border-stone-200">
-        <h1 class="text-xl font-semibold text-stone-800">Conversations</h1>
+    <div class="flex-1 overflow-y-auto">
+      <div v-if="loadingConversations" class="p-4 text-center text-stone-500">Loading...</div>
+      <div v-else-if="conversations.length === 0" class="p-4 text-center text-stone-500">
+        <div class="text-6xl mb-4">💬</div>
+        <p>No conversations yet</p>
+        <RouterLink
+          :to="{ name: 'contacts' }"
+          class="mt-4 inline-block rounded-lg bg-sky-600 text-white px-4 py-2 font-medium hover:bg-sky-700 transition"
+        >
+          Start a new chat
+        </RouterLink>
       </div>
-      <div class="flex-1 overflow-y-auto">
-        <div v-if="loadingConversations" class="p-4 text-center text-stone-500">
-          Loading...
-        </div>
-        <div v-else-if="conversations.length === 0" class="p-4 text-center text-stone-500">
-          No conversations yet
-        </div>
-        <div
-          v-else
+      <div v-else>
+        <RouterLink
           v-for="conv in conversations"
           :key="conv.id"
-          class="p-4 border-b border-stone-100 hover:bg-stone-50 cursor-pointer"
-          :class="{ 'bg-sky-50': selectedConversationId === conv.id }"
-          @click="selectConversation(conv)"
+          :to="{ name: 'chat', params: { id: conv.id } }"
+          class="block p-4 border-b border-stone-100 hover:bg-stone-50 transition"
+          :class="{ 'bg-sky-50': route.name === 'chat' && route.params.id === conv.id }"
         >
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-stone-200 flex items-center justify-center text-stone-600 font-semibold">
-              {{ getOtherParticipant(conv)?.username?.charAt(0).toUpperCase() || '?' }}
+            <div class="relative">
+              <img
+                v-if="getOtherParticipant(conv)?.profile?.avatarUrl!"
+                class="w-12 h-12 rounded-full"
+                :src="getOtherParticipant(conv)?.profile?.avatarUrl!"
+                alt=""
+              />
+              <div
+                v-else
+                class="w-12 h-12 rounded-full bg-stone-200 flex items-center justify-center text-stone-600 font-semibold text-lg"
+              >
+                {{ getOtherParticipant(conv)?.username?.charAt(0).toUpperCase() || "?" }}
+              </div>
+              <div
+                v-if="isUserOnline(getOtherParticipant(conv)?.id || '')"
+                class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
+                title="Online"
+              ></div>
+              <div
+                v-else-if="getOtherParticipant(conv)?.id"
+                class="absolute bottom-0 right-0 w-3 h-3 bg-stone-400 border-2 border-white rounded-full"
+                title="Offline"
+              ></div>
             </div>
             <div class="flex-1 min-w-0">
               <div class="font-medium text-stone-800 truncate">
-                {{ getOtherParticipant(conv)?.profile?.displayName || getOtherParticipant(conv)?.username || 'Unknown' }}
+                {{
+                  getOtherParticipant(conv)?.profile?.displayName ||
+                  getOtherParticipant(conv)?.username ||
+                  "Unknown"
+                }}
               </div>
               <div class="text-sm text-stone-500 truncate">
                 {{ getLastMessage(conv) }}
               </div>
             </div>
+            <div v-if="conv.lastMessage" class="text-xs text-stone-400">
+              {{ formatTime(conv.lastMessage.createdAt) }}
+            </div>
           </div>
-        </div>
-      </div>
-      <div class="p-4 border-t border-stone-200">
-        <RouterLink
-          :to="{ name: 'contacts' }"
-          class="block w-full text-center rounded-lg bg-sky-600 text-white px-4 py-2 font-medium hover:bg-sky-700 transition"
-        >
-          New Chat
         </RouterLink>
       </div>
     </div>
 
-    <!-- Chat Area -->
-    <div class="flex-1 flex flex-col" v-if="selectedConversation">
-      <!-- Chat Header -->
-      <div class="p-4 border-b border-stone-200 flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-stone-200 flex items-center justify-center text-stone-600 font-semibold">
-          {{ getOtherParticipant(selectedConversation)?.username?.charAt(0).toUpperCase() || '?' }}
-        </div>
-        <div>
-          <div class="font-medium text-stone-800">
-            {{ getOtherParticipant(selectedConversation)?.profile?.displayName || getOtherParticipant(selectedConversation)?.username || 'Unknown' }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Messages -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-4" ref="messagesContainer">
-        <div v-if="loadingMessages" class="text-center text-stone-500">
-          Loading messages...
-        </div>
-        <div v-else-if="messages.length === 0" class="text-center text-stone-500">
-          No messages yet. Start the conversation!
-        </div>
-        <div
-          v-else
-          v-for="msg in messages"
-          :key="msg.id"
-          class="flex"
-          :class="{ 'justify-end': msg.senderId === currentUserId }"
-        >
-          <div
-            class="max-w-xs lg:max-w-md rounded-lg px-4 py-2"
-            :class="msg.senderId === currentUserId ? 'bg-sky-600 text-white' : 'bg-stone-100 text-stone-800'"
-          >
-            <div class="text-sm">{{ msg.content }}</div>
-            <div
-              class="text-xs mt-1"
-              :class="msg.senderId === currentUserId ? 'text-sky-100' : 'text-stone-500'"
-            >
-              {{ formatTime(msg.createdAt) }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Message Input -->
-      <div class="p-4 border-t border-stone-200">
-        <form @submit.prevent="sendMessage" class="flex gap-2">
-          <input
-            v-model="newMessageText"
-            type="text"
-            placeholder="Type a message..."
-            class="flex-1 border border-stone-300 rounded-lg px-4 py-2 text-stone-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
-            :disabled="sendingMessage"
-          />
-          <button
-            type="submit"
-            class="rounded-lg bg-sky-600 text-white px-6 py-2 font-medium hover:bg-sky-700 disabled:opacity-50"
-            :disabled="!newMessageText.trim() || sendingMessage"
-          >
-            Send
-          </button>
-        </form>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else class="flex-1 flex items-center justify-center">
-      <div class="text-center space-y-4">
-        <div class="text-6xl">💬</div>
-        <h2 class="text-2xl font-semibold text-stone-800">Select a conversation</h2>
-        <p class="text-stone-600">Choose a conversation from the list or start a new chat</p>
-      </div>
+    <!-- New Chat Button -->
+    <div class="p-4 border-t border-stone-200">
+      <RouterLink
+        :to="{ name: 'contacts' }"
+        class="block w-full text-center rounded-lg bg-sky-600 text-white px-4 py-2 font-medium hover:bg-sky-700 transition"
+      >
+        New Chat
+      </RouterLink>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from "vue";
-import { RouterLink } from "vue-router";
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { RouterLink, useRoute } from "vue-router";
 import { useConversationsApi, type ConversationResponse } from "@/services/conversations.api";
-import { useMessagesApi, type MessageResponse } from "@/services/messages.api";
 import { useAuthStore } from "@/stores/auth.store";
 import { storeToRefs } from "pinia";
+import { useSocket } from "@/composables/socket.composable";
 
 const conversationsApi = useConversationsApi();
-const messagesApi = useMessagesApi();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
+const route = useRoute();
 
 const currentUserId = computed(() => user.value?.id ?? "");
 
 const conversations = ref<ConversationResponse[]>([]);
-const selectedConversation = ref<ConversationResponse | null>(null);
-const selectedConversationId = computed(() => selectedConversation.value?.id ?? null);
-const messages = ref<MessageResponse[]>([]);
-const newMessageText = ref("");
 const loadingConversations = ref(false);
-const loadingMessages = ref(false);
-const sendingMessage = ref(false);
-const messagesContainer = ref<HTMLElement | null>(null);
+
+// Online status tracking
+const onlineUsers = ref<Set<string>>(new Set());
+const userLastSeen = ref<Map<string, string>>(new Map());
+
+const { socket } = useSocket();
 
 function getOtherParticipant(conv: ConversationResponse) {
-  return conv.participants.find(p => p.userId !== currentUserId.value)?.user;
+  return conv.participants.find((p) => p.userId !== currentUserId.value)?.user;
+}
+
+function isUserOnline(userId: string): boolean {
+  return onlineUsers.value.has(userId);
 }
 
 function getLastMessage(conv: ConversationResponse) {
   if (conv.lastMessage) {
     const isFromMe = conv.lastMessage.senderId === currentUserId.value;
-    const senderName = isFromMe ? "You" : (conv.lastMessage.sender.profile?.displayName || conv.lastMessage.sender.username);
-    return `${senderName}: ${conv.lastMessage.content.substring(0, 50)}${conv.lastMessage.content.length > 50 ? '...' : ''}`;
+    const senderName = isFromMe
+      ? "You"
+      : conv.lastMessage.sender.profile?.displayName || conv.lastMessage.sender.username;
+    return `${senderName}: ${conv.lastMessage.content.substring(0, 50)}${conv.lastMessage.content.length > 50 ? "..." : ""}`;
   }
   return "No messages yet";
 }
 
 function formatTime(dateString: string) {
   const date = new Date(dateString);
-  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMs < 60000) return "now";
+  if (diffHours < 24) {
+    return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  }
+  if (diffDays < 7) {
+    return date.toLocaleDateString("en-US", { weekday: "short" });
+  }
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 async function loadConversations() {
   loadingConversations.value = true;
   try {
     conversations.value = await conversationsApi.getAll();
+
+    // Load initial online status and lastSeenAt from API response
+    conversations.value.forEach((conv) => {
+      const otherParticipant = getOtherParticipant(conv);
+      if (otherParticipant?.id) {
+        if (otherParticipant.status === "online") {
+          onlineUsers.value.add(otherParticipant.id);
+          userLastSeen.value.delete(otherParticipant.id);
+        } else {
+          onlineUsers.value.delete(otherParticipant.id);
+          if (otherParticipant.lastSeenAt) {
+            userLastSeen.value.set(otherParticipant.id, otherParticipant.lastSeenAt);
+          }
+        }
+      }
+    });
   } catch (error) {
     console.error("Failed to load conversations:", error);
   } finally {
@@ -175,76 +170,40 @@ async function loadConversations() {
   }
 }
 
-async function selectConversation(conv: ConversationResponse) {
-  selectedConversation.value = conv;
-  await loadMessages(conv.id);
+// Setup WebSocket listeners for real-time updates
+function setupSocketListeners() {
+  // Listen for new messages to update conversation list
+  socket.on("message:new", () => {
+    loadConversations();
+  });
+
+  // Listen for user online status
+  socket.on("user:online", (data: { userId: string; username: string }) => {
+    onlineUsers.value.add(data.userId);
+    userLastSeen.value.delete(data.userId);
+  });
+
+  // Listen for user offline status
+  socket.on("user:offline", (data: { userId: string; lastSeenAt: string }) => {
+    onlineUsers.value.delete(data.userId);
+    if (data.lastSeenAt) {
+      userLastSeen.value.set(data.userId, data.lastSeenAt);
+    }
+  });
 }
 
-async function loadMessages(conversationId: string) {
-  loadingMessages.value = true;
-  try {
-    messages.value = await messagesApi.getAll(conversationId);
-    await nextTick();
-    scrollToBottom();
-  } catch (error) {
-    console.error("Failed to load messages:", error);
-  } finally {
-    loadingMessages.value = false;
-  }
-}
-
-function scrollToBottom() {
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-  }
-}
-
-async function sendMessage() {
-  if (!selectedConversation.value || !newMessageText.value.trim() || sendingMessage.value) {
-    return;
-  }
-
-  const content = newMessageText.value.trim();
-  newMessageText.value = "";
-  sendingMessage.value = true;
-
-  try {
-    const newMessage = await messagesApi.create(selectedConversation.value.id, { content });
-    messages.value.push(newMessage);
-    // Reload conversations to update last message
-    await loadConversations();
-    await nextTick();
-    scrollToBottom();
-  } catch (error) {
-    console.error("Failed to send message:", error);
-    newMessageText.value = content; // Restore message on error
-  } finally {
-    sendingMessage.value = false;
-  }
+function cleanupSocketListeners() {
+  socket.off("message:new");
+  socket.off("user:online");
+  socket.off("user:offline");
 }
 
 onMounted(() => {
   loadConversations();
-  
-  // Check if there's a conversationId in query params
-  const urlParams = new URLSearchParams(window.location.search);
-  const conversationId = urlParams.get('conversationId');
-  if (conversationId) {
-    // Find and select the conversation
-    const conv = conversations.value.find(c => c.id === conversationId);
-    if (conv) {
-      selectConversation(conv);
-    } else {
-      // If not loaded yet, wait for conversations to load
-      const checkInterval = setInterval(() => {
-        const conv = conversations.value.find(c => c.id === conversationId);
-        if (conv) {
-          selectConversation(conv);
-          clearInterval(checkInterval);
-        }
-      }, 100);
-      setTimeout(() => clearInterval(checkInterval), 5000);
-    }
-  }
+  setupSocketListeners();
+});
+
+onUnmounted(() => {
+  cleanupSocketListeners();
 });
 </script>

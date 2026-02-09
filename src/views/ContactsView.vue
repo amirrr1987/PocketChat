@@ -86,8 +86,8 @@ async function startChat(userId: string) {
   startingChat.value = true;
   try {
     const conversation = await conversationsApi.createDirect({ userId });
-    // Navigate to chats page - the conversation will be selected there
-    router.push({ name: "chats", query: { conversationId: conversation.id } });
+    // Navigate directly to chat page
+    router.push({ name: "chat", params: { id: conversation.id } });
   } catch (err) {
     console.error("Failed to start chat:", err);
     error.value = "Failed to start conversation";

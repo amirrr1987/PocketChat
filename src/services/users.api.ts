@@ -6,6 +6,8 @@ export interface UserMeResponse {
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
+  status: 'online' | 'offline' | 'away' | 'busy';
+  lastSeenAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

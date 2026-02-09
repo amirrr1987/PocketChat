@@ -17,6 +17,8 @@ export interface ConversationResponse {
       id: string;
       username: string;
       email: string;
+      status?: 'online' | 'offline' | 'away' | 'busy';
+      lastSeenAt?: string | null;
       profile: {
         displayName: string | null;
         avatarUrl: string | null;

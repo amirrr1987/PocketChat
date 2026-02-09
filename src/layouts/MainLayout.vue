@@ -7,23 +7,23 @@
         title="Logout"
         @click="logout"
       >
-        <ArrowRightOnRectangleIcon class="size-5" />
+        <Icon icon="mdi:logout" class="size-5" />
       </button>
     </div>
-    <div class="flex-1 p-2 overflow-hidden mb-20">
+    <div class="flex-1 p-2 overflow-hidden" :class="{ 'mb-20': $route.name !== 'chat' }">
       <RouterView />
     </div>
-    <div class="fixed bottom-4 inset-x-2 mx-auto max-w-sm">
+    <div class="fixed bottom-4 inset-x-2 mx-auto max-w-sm" v-if="$route.name !== 'chat'">
       <div
         class="flex justify-evenly items-center gap-4 border border-gray-200 shadow rounded-full py-2 bg-white/30 backdrop-blur-xs"
       >
         <template v-for="menu in menus" :key="menu.id">
           <RouterLink
             :to="{ name: menu.name }"
-            class="text-stone-700"
+            class="text-stone-700 flex flex-col items-center gap-1"
             exact-active-class="text-sky-500!"
           >
-            <component :is="menu.icon" class="size-6 mx-auto" />
+            <Icon :icon="menu.icon" class="size-6" />
             <span class="text-xs">{{ menu.label }}</span>
           </RouterLink>
         </template>
@@ -34,10 +34,8 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { RouterView, RouterLink } from "vue-router";
-import { ChatBubbleLeftRightIcon } from "@heroicons/vue/24/outline";
-import { UserIcon } from "@heroicons/vue/24/outline";
-import { ArrowRightOnRectangleIcon } from "@heroicons/vue/24/outline";
-import { reactive, type FunctionalComponent, type HTMLAttributes, type VNodeProps } from "vue";
+import { Icon } from "@iconify/vue";
+import { reactive } from "vue";
 import { useAuthStore } from "@/stores/auth.store";
 
 const router = useRouter();
@@ -53,21 +51,28 @@ interface IMenu {
   order: number;
   name: string;
   label: string;
-  icon: FunctionalComponent<HTMLAttributes & VNodeProps>;
+  icon: string;
 }
 const menus = reactive<IMenu[]>([
   {
     id: "1",
     order: 1,
     name: "chats",
-    icon: ChatBubbleLeftRightIcon,
+    icon: "mdi:chat",
     label: "Chats",
+  },
+  {
+    id: "3",
+    order: 3,
+    name: "contacts",
+    icon: "mdi:contacts",
+    label: "Contacts",
   },
   {
     id: "2",
     order: 2,
     name: "profile",
-    icon: UserIcon,
+    icon: "mdi:account-circle",
     label: "Profile",
   },
 ]);

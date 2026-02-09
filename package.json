@@ -1,6 +1,6 @@
 {
   "name": "chat-app",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Araz Chat - Connect and communicate",
   "author": "Araz Chat",
   "license": "MIT",
@@ -31,6 +31,7 @@
     "@heroicons/vue": "^2.2.0",
     "@tailwindcss/vite": "^4.1.18",
     "@vueuse/core": "^14.2.0",
+    "@vueuse/router": "^14.2.0",
     "axios": "^1.13.5",
     "pinia": "^3.0.4",
     "socket.io-client": "^4.8.3",
@@ -39,6 +40,7 @@
     "vue-router": "^5.0.1"
   },
   "devDependencies": {
+    "@iconify/vue": "^5.0.0",
     "@playwright/test": "^1.58.1",
     "@tsconfig/node24": "^24.0.4",
     "@types/jsdom": "^27.0.0",

@@ -53,7 +53,8 @@ export const useAuthStore = defineStore("auth", () => {
         username: userData.username,
         email: userData.email,
         avatarUrl: userData.avatarUrl || undefined,
-        lastSeenAt: undefined,
+        status: userData.status || 'offline',
+        lastSeenAt: userData.lastSeenAt || undefined,
       };
       user.value = userObj;
       // Store plain object, not the ref

@@ -3,5 +3,6 @@ export interface IUser {
   username: string;
   email?: string;
   avatarUrl?: string;
+  status?: 'online' | 'offline' | 'away' | 'busy';
   lastSeenAt?: string;
 }
